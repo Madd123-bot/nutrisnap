@@ -6,7 +6,7 @@
   <title>NutriSnap</title>
   
   <style>
-    /* ... CSS (Same as before) ... */
+    /* --- CSS UTAMA --- */
     :root {
       --bg: #f0f7ff;
       --card: #ffffff;
@@ -65,8 +65,6 @@
         width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #e0e6ed;
         background: #fbfdff; border-radius: 10px; font-size: 16px; outline: none;
     }
-    .inp-label { display: block; text-align: left; font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    
     button {
         width: 100%; padding: 14px; border: none; border-radius: 10px;
         font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
@@ -81,6 +79,11 @@
     .danger-btn { background: #fff0f3; color: var(--danger); }
     
     .divider { margin: 25px 0; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+
+    /* Status Message */
+    .status-text {
+        font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 10px; min-height: 20px;
+    }
 
     /* Stats & Lists */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 25px; }
@@ -98,7 +101,12 @@
         background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px;
         display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    .item-val { font-weight: 700; font-size: 16px; color: #32325d; }
+    .item-val { font-weight: 700; font-size: 16px; color: #32325d; display: flex; align-items: center; gap: 10px; }
+    
+    /* Weight Indicators */
+    .trend-down { color: #2dce89; background: #e6fffa; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+    .trend-up { color: #f5365c; background: #fff5f5; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+    .trend-same { color: #fbbf24; background: #fffbeb; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
 
     /* Nav */
     .fab-btn {
@@ -186,21 +194,21 @@
           <h2>Daftar Baru</h2>
           
           <label class="inp-label">Nama Penuh</label>
-          <input type="text" id="signupName" placeholder="Contoh :Ahmad Albab" />
+          <input type="text" id="signupName" placeholder="Ahmad Albab" />
 
           <label class="inp-label">Nama Pengguna (Username)</label>
-          <input type="text" id="signupUsername" placeholder="Contoh : ahmad123" />
+          <input type="text" id="signupUsername" placeholder="ahmad_fit" />
           
           <label class="inp-label">E-mel</label>
           <input type="email" id="signupEmail" placeholder="nama@contoh.com" />
           
-          <label class="inp-label">Jawatan</label>
-          <input type="text" id="signupJob" placeholder="Contoh : Pelajar" />
+          <label class="inp-label">Pekerjaan</label>
+          <input type="text" id="signupJob" placeholder="Pelajar" />
 
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
               <div>
                   <label class="inp-label">Umur</label>
-                  <input type="number" id="signupAge" placeholder="Contoh : 25" />
+                  <input type="number" id="signupAge" placeholder="25" />
               </div>
               <div>
                   <label class="inp-label">Berat Semasa</label>
@@ -212,14 +220,14 @@
           <input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
           
           <label class="inp-label">Kata Laluan</label>
-          <input type="password" id="signupPass" placeholder="Contoh : Ahmad123" />
+          <input type="password" id="signupPass" placeholder="********" />
           
           <button class="primary" onclick="window.handleEmailSignup()">Daftar Sekarang</button>
           <button class="secondary" data-nav="login">Kembali</button>
         </div>
       </section>
 
-      <!-- ONBOARDING SCREEN (Fallback for Social Login) -->
+      <!-- ONBOARDING SCREEN -->
       <section id="onboarding" class="screen">
         <div class="login-card">
             <h2>Matlamat Anda</h2>
@@ -352,7 +360,7 @@
         if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
         else document.getElementById('userIcon').innerText = (user.displayName || "A").charAt(0).toUpperCase();
 
-        // Load Data
+        // Load Data (Hybrid)
         if (user.uid.startsWith('offline_')) {
             mealLogs = JSON.parse(localStorage.getItem('mealLogs') || '[]');
             weightLogs = JSON.parse(localStorage.getItem('weightLogs') || '[]');
@@ -363,8 +371,6 @@
         // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
         setTimeout(() => {
             if (!localStorage.getItem('userGoal')) {
-                // If they signed up with email & full details, we set goal there. 
-                // If social login, we might need onboarding.
                 showScreen('onboarding');
             } else {
                 console.log("Redirecting to Home...");
@@ -392,7 +398,7 @@
         window.handleLoginSuccess(mockUser);
     }
 
-    // Auto-Login Check
+    // Auto-Login Check (Local)
     window.addEventListener('load', () => {
         if(localStorage.getItem('isLoggedIn') === 'true') {
             const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -415,13 +421,49 @@
     }
 
     function renderWeightLogs() { 
+        // Sort logs by date descending
         const logs = weightLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
         const container = document.getElementById('weightHistory');
-        container.innerHTML = logs.length ? '' : '<div style="text-align:center; color:#999; padding:20px;">Tiada rekod.</div>';
-        logs.forEach(log => {
-            container.innerHTML += `<div class="list-item"><div class="item-date">${log.date}</div><div class="item-val">${log.weight} kg</div></div>`;
+        
+        if (logs.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Tiada rekod.</div>';
+            return;
+        }
+
+        let html = '';
+        logs.forEach((log, index) => {
+            // Get previous log (which is next in the sorted array, or null if this is the oldest)
+            const prevLog = logs[index + 1];
+            
+            let trendHtml = '';
+            if (prevLog) {
+                const diff = log.weight - prevLog.weight;
+                if (diff < 0) {
+                    // Loss (Good) -> Green Arrow Down
+                    trendHtml = `<span class="trend-down">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
+                } else if (diff > 0) {
+                    // Gain -> Red Arrow Up
+                    trendHtml = `<span class="trend-up">▲ ${diff.toFixed(1)}kg</span>`;
+                } else {
+                    // Same -> Yellow Dash
+                    trendHtml = `<span class="trend-same">—</span>`;
+                }
+            } else {
+                // First entry -> No trend
+                trendHtml = `<span style="color:#ccc; font-size:12px;">Mula</span>`;
+            }
+
+            html += `
+                <div class="list-item">
+                    <div class="item-date">${log.date}</div>
+                    <div class="item-val">${log.weight} kg ${trendHtml}</div>
+                </div>
+            `;
         });
-    } 
+        
+        container.innerHTML = html;
+    }
+
     function renderMeals() { 
         const container = document.getElementById('mealsContainer');
         container.innerHTML = '';
@@ -690,4 +732,3 @@
   </script>
 </body>
 </html>
-
