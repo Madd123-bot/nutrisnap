@@ -6,7 +6,7 @@
   <title>NutriSnap</title>
   
   <style>
-    /* --- CSS UTAMA --- */
+    /* ... CSS (Same as before) ... */
     :root {
       --bg: #f0f7ff;
       --card: #ffffff;
@@ -65,6 +65,8 @@
         width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #e0e6ed;
         background: #fbfdff; border-radius: 10px; font-size: 16px; outline: none;
     }
+    .inp-label { display: block; text-align: left; font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
     button {
         width: 100%; padding: 14px; border: none; border-radius: 10px;
         font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
@@ -79,11 +81,6 @@
     .danger-btn { background: #fff0f3; color: var(--danger); }
     
     .divider { margin: 25px 0; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
-
-    /* Status Message */
-    .status-text {
-        font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 10px; min-height: 20px;
-    }
 
     /* Stats & Lists */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 25px; }
@@ -183,19 +180,46 @@
         </div>
       </section>
 
-      <!-- 3. EMAIL SIGNUP -->
+      <!-- 3. EMAIL SIGNUP (UPDATED FORM) -->
       <section id="emailSignup" class="screen">
         <div class="login-card">
           <h2>Daftar Baru</h2>
-          <input type="text" placeholder="Nama Penuh" id="signupName" />
-          <input type="email" placeholder="E-mel" id="signupEmail" />
-          <input type="password" placeholder="Kata Laluan" id="signupPass" />
-          <button class="primary" onclick="window.handleEmailSignup()">Daftar</button>
+          
+          <label class="inp-label">Nama Penuh</label>
+          <input type="text" id="signupName" placeholder="Ahmad Albab" />
+
+          <label class="inp-label">Nama Pengguna (Username)</label>
+          <input type="text" id="signupUsername" placeholder="ahmad_fit" />
+          
+          <label class="inp-label">E-mel</label>
+          <input type="email" id="signupEmail" placeholder="nama@contoh.com" />
+          
+          <label class="inp-label">Pekerjaan</label>
+          <input type="text" id="signupJob" placeholder="Pelajar" />
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              <div>
+                  <label class="inp-label">Umur</label>
+                  <input type="number" id="signupAge" placeholder="25" />
+              </div>
+              <div>
+                  <label class="inp-label">Berat Semasa</label>
+                  <input type="number" id="signupWeight" placeholder="70 kg" step="0.1" />
+              </div>
+          </div>
+
+          <label class="inp-label">Berat Matlamat (kg)</label>
+          <input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
+          
+          <label class="inp-label">Kata Laluan</label>
+          <input type="password" id="signupPass" placeholder="********" />
+          
+          <button class="primary" onclick="window.handleEmailSignup()">Daftar Sekarang</button>
           <button class="secondary" data-nav="login">Kembali</button>
         </div>
       </section>
 
-      <!-- ONBOARDING SCREEN -->
+      <!-- ONBOARDING SCREEN (Fallback for Social Login) -->
       <section id="onboarding" class="screen">
         <div class="login-card">
             <h2>Matlamat Anda</h2>
@@ -297,7 +321,7 @@
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
         const isAuth = ['login', 'emailLogin', 'emailSignup', 'onboarding'].includes(id);
-        const hideNav = isAuth; // Onboarding hides nav
+        const hideNav = isAuth; 
 
         const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
         els.forEach(el => el.classList.toggle('hidden', hideNav));
@@ -328,7 +352,7 @@
         if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
         else document.getElementById('userIcon').innerText = (user.displayName || "A").charAt(0).toUpperCase();
 
-        // Load Data (Hybrid)
+        // Load Data
         if (user.uid.startsWith('offline_')) {
             mealLogs = JSON.parse(localStorage.getItem('mealLogs') || '[]');
             weightLogs = JSON.parse(localStorage.getItem('weightLogs') || '[]');
@@ -336,14 +360,17 @@
             window.subscribeToData(user.uid);
         }
 
-        // FORCE REDIRECT - CRITICAL FIX
-        // Check if onboarding needed, otherwise go home immediately
-        if (!localStorage.getItem('userGoal')) {
-            showScreen('onboarding');
-        } else {
-            console.log("Redirecting to Home...");
-            showScreen('home');
-        }
+        // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
+        setTimeout(() => {
+            if (!localStorage.getItem('userGoal')) {
+                // If they signed up with email & full details, we set goal there. 
+                // If social login, we might need onboarding.
+                showScreen('onboarding');
+            } else {
+                console.log("Redirecting to Home...");
+                showScreen('home');
+            }
+        }, 500); 
     }
 
     window.handleLogoutSuccess = () => {
@@ -362,11 +389,10 @@
         };
         localStorage.setItem('currentUser', JSON.stringify(mockUser));
         localStorage.setItem('isLoggedIn', 'true');
-        window.handleLoginSuccess(mockUser); // Direct call, no reload needed
+        window.handleLoginSuccess(mockUser);
     }
 
-    // Auto-Login Check (Local)
-    // Run this AFTER the page loads
+    // Auto-Login Check
     window.addEventListener('load', () => {
         if(localStorage.getItem('isLoggedIn') === 'true') {
             const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -416,7 +442,6 @@
     window.triggerCamera = () => document.getElementById('cameraInput').click();
     window.triggerGallery = () => document.getElementById('galleryInput').click();
     window.handleImageUpload = (input) => { 
-        // Simulation
         setTimeout(() => {
             if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
                 const data = { name: "Nasi Lemak", calories: 450, protein: 12, carbs: 60, date: getTodayDate() };
@@ -455,7 +480,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS ANDA ---
     const firebaseConfig = {
@@ -516,8 +541,6 @@
     }
 
     // --- LOGIN HANDLERS ---
-    
-    // GOOGLE
     window.handleGoogleLogin = async () => {
         const btn = document.getElementById('googleBtn');
         const stat = document.getElementById('loginStatus');
@@ -525,21 +548,15 @@
         btn.innerText = "Menghubungi Google...";
         stat.innerText = "Sila tunggu pop-up...";
 
-        // REMOVED TIMEOUT RACE - JUST WAIT
         try {
             if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            
-            // Standard Popup
             const result = await signInWithPopup(auth, new GoogleAuthProvider());
             
-            // EXPLICIT CALL to fix "stuck" issue
             stat.innerText = "Berjaya! Mengalih...";
             window.handleLoginSuccess(result.user);
             
         } catch (error) {
             console.error("Login Error:", error);
-            
-            // AUTOMATIC FALLBACK
             if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
                 stat.innerText = "Domain Blocked. Entering Offline Mode...";
                 setTimeout(() => window.forceOfflineLogin('Google'), 1000);
@@ -552,7 +569,6 @@
         }
     };
 
-    // FACEBOOK
     window.handleFacebookLogin = async () => {
         const btn = document.getElementById('fbBtn');
         const stat = document.getElementById('loginStatus');
@@ -563,7 +579,6 @@
         try {
             if (!window.isFirebaseReady) throw new Error("Firebase not ready");
             const result = await signInWithPopup(auth, new FacebookAuthProvider());
-            
             stat.innerText = "Berjaya! Mengalih...";
             window.handleLoginSuccess(result.user);
         } catch (error) {
@@ -602,16 +617,45 @@
         }
     };
 
+    // UPDATED SIGNUP HANDLER FOR NEW FIELDS
     window.handleEmailSignup = async () => {
         const name = document.getElementById('signupName').value;
+        const username = document.getElementById('signupUsername').value;
         const email = document.getElementById('signupEmail').value;
+        const job = document.getElementById('signupJob').value;
+        const age = document.getElementById('signupAge').value;
+        const weight = document.getElementById('signupWeight').value;
+        const goal = document.getElementById('signupGoal').value;
         const pass = document.getElementById('signupPass').value;
-        if(!name || !email || !pass) return alert("Sila isi info");
+
+        if(!name || !email || !pass) return alert("Sila isi info wajib.");
         
         try {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await updateProfile(res.user, { displayName: name });
+            
+            // Save extra data to Firestore
+            if (window.isFirebaseReady) {
+                await setDoc(doc(db, "users", res.user.uid), {
+                    username, job, age, weight, goal, 
+                    email: email, 
+                    createdAt: new Date()
+                });
+                
+                // Add initial weight log
+                if (weight) {
+                    await addDoc(collection(db, "users", res.user.uid, "weights"), {
+                        weight: parseFloat(weight),
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                }
+            }
+            
+            // Save goal locally to skip onboarding
+            if (goal) localStorage.setItem('userGoal', goal);
+
             window.handleLoginSuccess(res.user);
+            
         } catch(error) {
             // Fallback
             const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
