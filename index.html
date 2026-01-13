@@ -115,14 +115,38 @@
         border: none; box-shadow: 0 10px 20px rgba(45, 206, 137, 0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
     .bottombar {
-        position: fixed; bottom: 0; left: 0; right: 0; height: 70px; background: rgba(255, 255, 255, 0.98);
-        display: flex; justify-content: space-between; align-items: center; padding: 0 10px; box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
+        position: fixed; bottom: 0; left: 0; right: 0; height: 75px; /* Sedikit tinggi */
+        background: rgba(255, 255, 255, 0.98);
+        display: flex; justify-content: space-between; align-items: center; padding: 0 15px; 
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
     }
+    
+    /* UPDATED NAVIGATION BUTTONS WITH BUBBLE */
     .nav-btn {
-        flex: 1; background: none; border: none; padding: 8px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; color: #adb5bd; font-size: 11px; font-weight: 600; gap: 5px;
+        flex: 1; 
+        background: none; 
+        border: none; 
+        padding: 8px; 
+        display: flex; 
+        flex-direction: column;
+        align-items: center; 
+        justify-content: center; 
+        color: #adb5bd; 
+        font-size: 11px; 
+        font-weight: 600; 
+        gap: 5px;
+        margin: 0 5px;
+        border-radius: 16px; /* Rounded pill shape */
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth spring */
     }
-    .nav-btn.active { color: var(--primary); }
+    
+    /* THE ACTIVE BUBBLE EFFECT */
+    .nav-btn.active { 
+        color: var(--primary); 
+        background-color: rgba(55, 124, 255, 0.15); /* Soft Blue Bubble */
+        transform: translateY(-2px); /* Slight lift */
+    }
+    
     .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
     .nav-spacer { width: 70px; } 
 
@@ -334,6 +358,11 @@
         const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
         els.forEach(el => el.classList.toggle('hidden', hideNav));
         
+        // Handle Nav State
+        document.querySelectorAll('.nav-btn').forEach(b => {
+             b.classList.toggle('active', b.getAttribute('data-nav') === id);
+        });
+        
         if(id === 'home') renderHomeStats();
         if(id === 'weight') renderWeightLogs();
         if(id === 'analysis') renderMeals();
@@ -439,17 +468,13 @@
             if (prevLog) {
                 const diff = log.weight - prevLog.weight;
                 if (diff < 0) {
-                    // Loss (Good) -> Green Arrow Down
                     trendHtml = `<span class="trend-down">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
                 } else if (diff > 0) {
-                    // Gain -> Red Arrow Up
                     trendHtml = `<span class="trend-up">▲ ${diff.toFixed(1)}kg</span>`;
                 } else {
-                    // Same -> Yellow Dash
                     trendHtml = `<span class="trend-same">—</span>`;
                 }
             } else {
-                // First entry -> No trend
                 trendHtml = `<span style="color:#ccc; font-size:12px;">Mula</span>`;
             }
 
