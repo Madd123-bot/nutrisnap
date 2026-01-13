@@ -522,7 +522,38 @@
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
-    window.resetApp = () => { if(confirm("Padam data?")) { localStorage.clear(); location.reload(); } };
+    window.resetApp = async () => { 
+        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
+            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
+                // Cloud Deletion Logic
+                const uid = currentUser.uid;
+                const { deleteDoc, getDocs, doc } = window.fs_ops; // We need to export these from module
+                
+                try {
+                    // 1. Delete Meal Subcollection
+                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
+                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    
+                    // 2. Delete Weight Subcollection
+                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
+                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    
+                    // 3. Delete User Doc
+                    await deleteDoc(doc(db, "users", uid));
+                    
+                    alert("Akaun berjaya dipadam.");
+                    window.handleLogout();
+                } catch(e) {
+                    console.error(e);
+                    alert("Ralat memadam data: " + e.message);
+                }
+            } else {
+                // Local Deletion
+                localStorage.clear(); 
+                location.reload(); 
+            }
+        } 
+    };
     
     // Save Weight
     window.saveWeight = () => {
@@ -547,7 +578,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS ANDA ---
     const firebaseConfig = {
@@ -587,6 +618,7 @@
     // --- EXPORTS TO WINDOW ---
     window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
     window.fs = { query, orderBy, limit, onSnapshot, addDoc };
+    window.fs_ops = { deleteDoc, getDocs, doc }; // Export for delete logic
     
     // --- DATA SUBSCRIPTION ---
     window.subscribeToData = (uid) => {
