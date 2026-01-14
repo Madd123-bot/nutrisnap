@@ -115,13 +115,12 @@
         border: none; box-shadow: 0 10px 20px rgba(45, 206, 137, 0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
     .bottombar {
-        position: fixed; bottom: 0; left: 0; right: 0; height: 75px; /* Sedikit tinggi */
+        position: fixed; bottom: 0; left: 0; right: 0; height: 75px; 
         background: rgba(255, 255, 255, 0.98);
         display: flex; justify-content: space-between; align-items: center; padding: 0 15px; 
         box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
     }
     
-    /* UPDATED NAVIGATION BUTTONS WITH BUBBLE */
     .nav-btn {
         flex: 1; 
         background: none; 
@@ -136,15 +135,14 @@
         font-weight: 600; 
         gap: 5px;
         margin: 0 5px;
-        border-radius: 16px; /* Rounded pill shape */
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth spring */
+        border-radius: 16px; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
     }
     
-    /* THE ACTIVE BUBBLE EFFECT */
     .nav-btn.active { 
         color: var(--primary); 
-        background-color: rgba(55, 124, 255, 0.15); /* Soft Blue Bubble */
-        transform: translateY(-2px); /* Slight lift */
+        background-color: rgba(55, 124, 255, 0.15); 
+        transform: translateY(-2px); 
     }
     
     .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
@@ -153,6 +151,14 @@
     /* Upload UI */
     .upload-box { background:#f6f9fc; height:200px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#cbd5e0; border:2px dashed #e2e8f0; position:relative; overflow:hidden; }
     .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+    
+    /* NEW: Food Image in Diary */
+    .meal-img-thumb {
+        width: 50px; height: 50px; border-radius: 8px; object-fit: cover; margin-right: 12px;
+        background: #eee;
+    }
+    .meal-row-content { display: flex; align-items: center; width: 100%; }
+    .meal-info { flex: 1; }
   </style>
 </head>
 <body>
@@ -494,9 +500,29 @@
         container.innerHTML = '';
         const grouped = {};
         mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
+        
         Object.keys(grouped).sort().reverse().forEach(date => {
              let html = `<div class="meal-day"><h4>${date}</h4>`;
-             grouped[date].forEach(i => html += `<div class="meal-row"><div>${i.name}</div><div>${i.calories} kcal</div></div>`);
+             grouped[date].forEach(i => {
+                 // Check if image exists
+                 let imgHtml = '';
+                 if (i.image) {
+                     imgHtml = `<img src="${i.image}" class="meal-img-thumb" alt="food">`;
+                 }
+                 
+                 html += `
+                 <div class="list-item">
+                    <div class="meal-row-content">
+                        ${imgHtml}
+                        <div class="meal-info">
+                            <div style="font-weight:700">${i.name}</div>
+                            <div style="font-size:12px; color:#888;">
+                                ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
+                            </div>
+                        </div>
+                    </div>
+                 </div>`;
+             });
              container.innerHTML += html + '</div>';
         });
     }
@@ -508,16 +534,51 @@
     };
     window.triggerCamera = () => document.getElementById('cameraInput').click();
     window.triggerGallery = () => document.getElementById('galleryInput').click();
+    
+    // UPDATED IMAGE UPLOAD HANDLER
     window.handleImageUpload = (input) => { 
-        setTimeout(() => {
-            if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
-                const data = { name: "Nasi Lemak", calories: 450, protein: 12, carbs: 60, date: getTodayDate() };
-                if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-                else { mealLogs.push(data); localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); renderHomeStats(); }
-                showScreen('home');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Show preview
+                document.getElementById('uploadPreview').src = e.target.result;
+                document.getElementById('uploadPreview').classList.remove('hidden');
+                document.getElementById('uploadPlaceholder').classList.add('hidden');
+                document.getElementById('aiLoading').classList.remove('hidden');
+                
+                // Store base64 string
+                const imageBase64 = e.target.result;
+                
+                setTimeout(() => {
+                    document.getElementById('aiLoading').classList.add('hidden');
+                    if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
+                        // Create data object with image
+                        const data = { 
+                            name: "Nasi Lemak", 
+                            calories: 450, 
+                            protein: 12, 
+                            carbs: 60, 
+                            date: getTodayDate(),
+                            image: imageBase64 // Store image data
+                        };
+                        
+                        if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
+                            // Note: Storing Base64 in Firestore is not recommended for large apps (use Storage), 
+                            // but fine for this prototype scale.
+                            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+                        } else { 
+                            mealLogs.push(data); 
+                            localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); 
+                            renderHomeStats(); 
+                        }
+                        showScreen('home');
+                    }
+                }, 1000);
             }
-        }, 500);
+            reader.readAsDataURL(input.files[0]);
+        }
     };
+    
     window.resetUpload = () => showScreen('home');
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
