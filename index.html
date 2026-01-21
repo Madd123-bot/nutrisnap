@@ -110,18 +110,19 @@
 
     /* Nav */
     .fab-btn {
-        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+        position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
         width: 60px; height: 60px; border-radius: 50%; background: var(--accent-gradient); color: white;
         border: none; box-shadow: 0 10px 20px rgba(45, 206, 137, 0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
+    
+    /* Responsive Bottom Bar */
     .bottombar {
-        position: fixed; bottom: 0; left: 0; right: 0; height: 75px; /* Sedikit tinggi */
+        position: absolute; bottom: 0; left: 0; right: 0; height: 75px; 
         background: rgba(255, 255, 255, 0.98);
         display: flex; justify-content: space-between; align-items: center; padding: 0 15px; 
         box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
     }
     
-    /* UPDATED NAVIGATION BUTTONS WITH BUBBLE */
     .nav-btn {
         flex: 1; 
         background: none; 
@@ -136,15 +137,14 @@
         font-weight: 600; 
         gap: 5px;
         margin: 0 5px;
-        border-radius: 16px; /* Rounded pill shape */
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smooth spring */
+        border-radius: 16px; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
     }
     
-    /* THE ACTIVE BUBBLE EFFECT */
     .nav-btn.active { 
         color: var(--primary); 
-        background-color: rgba(55, 124, 255, 0.15); /* Soft Blue Bubble */
-        transform: translateY(-2px); /* Slight lift */
+        background-color: rgba(55, 124, 255, 0.15); 
+        transform: translateY(-2px); 
     }
     
     .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
@@ -153,6 +153,30 @@
     /* Upload UI */
     .upload-box { background:#f6f9fc; height:200px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#cbd5e0; border:2px dashed #e2e8f0; position:relative; overflow:hidden; }
     .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+    
+    /* Image Thumb */
+    .meal-img-thumb {
+        width: 50px; height: 50px; border-radius: 8px; object-fit: cover; margin-right: 12px;
+        background: #eee;
+    }
+    .meal-row-content { display: flex; align-items: center; width: 100%; }
+    .meal-info { flex: 1; }
+    
+    /* Loading Overlay */
+    .loading-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10; }
+    .spinner { width:30px; height:30px; border:3px solid var(--soft); border-top:3px solid var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+    /* --- RESPONSIVE MEDIA QUERIES --- */
+    @media (min-width: 600px) {
+        body {
+            display: flex; justify-content: center; align-items: center; background-color: #eef2f6;
+        }
+        #app {
+            width: 100%; height: 90vh; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+    }
   </style>
 </head>
 <body>
@@ -282,12 +306,12 @@
           <h2>Analisis Makanan</h2>
           <div class="upload-box">
              <img id="uploadPreview" class="preview-img hidden" src="" alt="Preview">
-             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span>Menganalisis AI...</span></div>
+             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span>Mencari Data...</span></div>
              <div id="uploadPlaceholder">
                 <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
              </div>
           </div>
-          <p style="color:var(--muted);">Ambil gambar makanan untuk analisis AI.</p>
+          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Taip Nama Makanan<br>3. Dapatkan Data Nutrisi</p>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
           <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
           <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
@@ -349,12 +373,14 @@
 
   <!-- SINGLE LOGIC SCRIPT -->
   <script>
+    // --- API KEYS ---
+    const LOGMEAL_TOKEN = "36e194aa6e229b5dd49edbf2a7add2f00a792a21";
+    const KALORI_API_KEY = "kal_97f41a3a19ba02ffd1eac01bc2338265fd3a1db8c51df3e4e1c96c35f89d78af";
+
     // --- 1. UI HELPERS ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
-        const isAuth = ['login', 'emailLogin', 'emailSignup', 'onboarding'].includes(id);
-        const hideNav = isAuth; 
-
+        const hideNav = ['login','emailLogin','emailSignup','onboarding'].includes(id);
         const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
         els.forEach(el => el.classList.toggle('hidden', hideNav));
         
@@ -374,22 +400,16 @@
     // --- 2. GLOBAL STATE ---
     let currentUser = null, mealLogs = [], weightLogs = [];
     let activeMealMetric = 'calories';
-    const API_KEY = ""; 
+    let base64ImageTemp = ""; // Temp storage for image upload
 
     // --- 3. LOGIN SUCCESS HANDLER ---
     window.handleLoginSuccess = (user) => {
         currentUser = user;
-        console.log("LOGIN SUCCESS:", user.email);
-        
-        const statusEl = document.getElementById('loginStatus');
-        if(statusEl) statusEl.innerText = "Berjaya! Mengalih...";
-
         document.getElementById('profileName').innerText = user.displayName || "Pengguna";
         document.getElementById('profileEmail').innerText = user.email;
         if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
         else document.getElementById('userIcon').innerText = (user.displayName || "A").charAt(0).toUpperCase();
 
-        // Load Data (Hybrid)
         if (user.uid.startsWith('offline_')) {
             mealLogs = JSON.parse(localStorage.getItem('mealLogs') || '[]');
             weightLogs = JSON.parse(localStorage.getItem('weightLogs') || '[]');
@@ -397,14 +417,9 @@
             window.subscribeToData(user.uid);
         }
 
-        // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
         setTimeout(() => {
-            if (!localStorage.getItem('userGoal')) {
-                showScreen('onboarding');
-            } else {
-                console.log("Redirecting to Home...");
-                showScreen('home');
-            }
+            if (!localStorage.getItem('userGoal')) showScreen('onboarding');
+            else showScreen('home');
         }, 500); 
     }
 
@@ -427,7 +442,6 @@
         window.handleLoginSuccess(mockUser);
     }
 
-    // Auto-Login Check (Local)
     window.addEventListener('load', () => {
         if(localStorage.getItem('isLoggedIn') === 'true') {
             const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -435,14 +449,137 @@
         }
     });
 
-    // --- 4. DATA LOGIC ---
+    // --- 4. REAL API LOGIC ---
+    async function processFoodScan(imageFile) {
+        let formData = new FormData();
+        formData.append('image', imageFile);
+
+        try {
+            // STEP 1: LogMeal (Detection)
+            const logmealResponse = await fetch('https://api.logmeal.es/v2/image/segmentation/complete', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${LOGMEAL_TOKEN}` },
+                body: formData
+            });
+
+            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API");
+
+            const logmealData = await logmealResponse.json();
+
+            // STEP 2: Extract Food Name
+            let detectedName = "Makanan Tidak Dikenali";
+            if (logmealData.food_family && logmealData.food_family.length > 0) {
+                 detectedName = logmealData.food_family[0].name;
+            } else if (logmealData.recognition_results && logmealData.recognition_results.length > 0) {
+                 detectedName = logmealData.recognition_results[0].name;
+            }
+
+            // STEP 3: Get Nutrition from Kalori.my
+            // Note: Since LogMeal returns English names, and Kalori.my is Malay/Local, 
+            // we prompt the user to confirm/edit the name first for better accuracy.
+            const userFoodName = prompt(`AI Mengesan: ${detectedName}.\nSila sahkan nama makanan (Bahasa Melayu) untuk carian nutrisi:`, detectedName);
+            
+            if (userFoodName) {
+                await fetchNutritionFromKalori(userFoodName);
+            } else {
+                 document.getElementById('aiLoading').classList.add('hidden');
+            }
+
+        } catch (error) {
+            console.error("AI Error:", error);
+            alert("Ralat AI: " + error.message + "\nSila cuba lagi atau taip nama makanan secara manual.");
+            document.getElementById('aiLoading').classList.add('hidden');
+        }
+    }
+
+    async function fetchNutritionFromKalori(foodQuery) {
+        const URL = `https://api.kalori.my/v1/foods/search?q=${encodeURIComponent(foodQuery)}`;
+        try {
+            const response = await fetch(URL, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${KALORI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            document.getElementById('aiLoading').classList.add('hidden');
+
+            if (data && data.length > 0) {
+                const food = data[0];
+                if(confirm(`Jumpa: ${food.name}\n\nKalori: ${food.calories}\nProtein: ${food.protein}g\nKarbo: ${food.carbohydrates}g\n\nSimpan?`)) {
+                    const mealData = {
+                        name: food.name,
+                        calories: parseFloat(food.calories),
+                        protein: parseFloat(food.protein),
+                        carbs: parseFloat(food.carbohydrates),
+                        date: getTodayDate(),
+                        image: base64ImageTemp
+                    };
+                    saveMealData(mealData);
+                }
+            } else {
+                if(confirm(`Maaf, tiada data untuk '${foodQuery}'. Simpan nama & gambar sahaja?`)) {
+                    saveMealData({ name: foodQuery, calories: 0, protein: 0, carbs: 0, date: getTodayDate(), image: base64ImageTemp });
+                }
+            }
+        } catch (error) {
+            console.error("Kalori API Error:", error);
+            document.getElementById('aiLoading').classList.add('hidden');
+            alert("Ralat sambungan ke Kalori.my.");
+        }
+    }
+
+    // --- 5. CAMERA & SAVE LOGIC ---
+    window.triggerCamera = () => document.getElementById('cameraInput').click();
+    window.triggerGallery = () => document.getElementById('galleryInput').click();
+    
+    window.handleImageUpload = (input) => { 
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                base64ImageTemp = e.target.result;
+                document.getElementById('uploadPreview').src = base64ImageTemp;
+                document.getElementById('uploadPreview').classList.remove('hidden');
+                document.getElementById('uploadPlaceholder').classList.add('hidden');
+                document.getElementById('aiLoading').classList.remove('hidden'); // Show spinner
+                
+                // CALL REAL API
+                processFoodScan(file);
+            }
+            reader.readAsDataURL(file);
+        }
+    };
+
+    function saveMealData(data) {
+        if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
+            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+        } else { 
+            mealLogs.push(data); 
+            localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); 
+            renderHomeStats(); 
+        }
+        window.resetUpload();
+    }
+
+    window.resetUpload = () => {
+        document.getElementById('uploadPreview').classList.add('hidden');
+        document.getElementById('uploadPlaceholder').classList.remove('hidden');
+        document.getElementById('aiLoading').classList.add('hidden');
+        document.getElementById('cameraInput').value = ""; 
+        showScreen('home');
+    }
+
+    // --- 6. RENDER LOGIC ---
     function renderHomeStats() {
         const today = getTodayDate();
         const logs = mealLogs.filter(l => l.date === today);
         const sum = (k) => logs.reduce((a, b) => a + (b[k]||0), 0);
-        document.getElementById('calBalance').innerText = sum('calories');
-        document.getElementById('protBalance').innerText = sum('protein');
-        document.getElementById('carbBalance').innerText = sum('carbs');
+        document.getElementById('calBalance').innerText = sum('calories').toFixed(0);
+        document.getElementById('protBalance').innerText = sum('protein').toFixed(1);
+        document.getElementById('carbBalance').innerText = sum('carbs').toFixed(1);
         
         const list = document.getElementById('recentMealsList');
         list.innerHTML = logs.length ? '' : `<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>`;
@@ -450,42 +587,23 @@
     }
 
     function renderWeightLogs() { 
-        // Sort logs by date descending
         const logs = weightLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
         const container = document.getElementById('weightHistory');
-        
-        if (logs.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Tiada rekod.</div>';
-            return;
-        }
+        if (logs.length === 0) return container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Tiada rekod.</div>';
+        let startWeight = parseFloat(localStorage.getItem('userStartWeight'));
+        if (!startWeight && logs.length > 0) startWeight = logs[logs.length - 1].weight;
 
         let html = '';
         logs.forEach((log, index) => {
-            // Get previous log (which is next in the sorted array, or null if this is the oldest)
             const prevLog = logs[index + 1];
-            
-            let trendHtml = '';
-            if (prevLog) {
-                const diff = log.weight - prevLog.weight;
-                if (diff < 0) {
-                    trendHtml = `<span class="trend-down">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
-                } else if (diff > 0) {
-                    trendHtml = `<span class="trend-up">▲ ${diff.toFixed(1)}kg</span>`;
-                } else {
-                    trendHtml = `<span class="trend-same">—</span>`;
-                }
-            } else {
-                trendHtml = `<span style="color:#ccc; font-size:12px;">Mula</span>`;
+            let trendHtml = prevLog ? (log.weight < prevLog.weight ? '<span class="trend-down">▼</span>' : (log.weight > prevLog.weight ? '<span class="trend-up">▲</span>' : '<span class="trend-same">—</span>')) : '<span style="color:#ccc; font-size:12px;">Mula</span>';
+            let totalLossHtml = '';
+            if (startWeight && Math.abs(log.weight - startWeight) > 0.01) {
+                const diff = log.weight - startWeight;
+                totalLossHtml = `<span style="font-size:10px; color:${diff>0?'red':'green'}; margin-left:5px;">(${diff>0?'+':''}${diff.toFixed(1)})</span>`;
             }
-
-            html += `
-                <div class="list-item">
-                    <div class="item-date">${log.date}</div>
-                    <div class="item-val">${log.weight} kg ${trendHtml}</div>
-                </div>
-            `;
+            html += `<div class="list-item"><div class="item-date">${log.date}</div><div class="item-val">${log.weight} kg ${trendHtml} ${totalLossHtml}</div></div>`;
         });
-        
         container.innerHTML = html;
     }
 
@@ -494,77 +612,39 @@
         container.innerHTML = '';
         const grouped = {};
         mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
+        
         Object.keys(grouped).sort().reverse().forEach(date => {
              let html = `<div class="meal-day"><h4>${date}</h4>`;
-             grouped[date].forEach(i => html += `<div class="meal-row"><div>${i.name}</div><div>${i.calories} kcal</div></div>`);
+             grouped[date].forEach(i => {
+                 let imgHtml = i.image ? `<img src="${i.image}" class="meal-img-thumb" alt="food">` : `<div class="meal-img-thumb" style="display:flex;align-items:center;justify-content:center;">🍽️</div>`;
+                 html += `<div class="list-item"><div class="meal-row-content">${imgHtml}<div class="meal-info"><div style="font-weight:700">${i.name}</div><div style="font-size:12px; color:#888;">${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C</div></div></div></div>`;
+             });
              container.innerHTML += html + '</div>';
         });
     }
 
-    // --- 5. UTILS ---
+    // --- 7. UTILS ---
     window.saveOnboarding = () => {
-        const val = document.getElementById('onboardGoalWeight').value;
-        if(val) { localStorage.setItem('userGoal', val); showScreen('home'); }
-    };
-    window.triggerCamera = () => document.getElementById('cameraInput').click();
-    window.triggerGallery = () => document.getElementById('galleryInput').click();
-    window.handleImageUpload = (input) => { 
-        setTimeout(() => {
-            if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
-                const data = { name: "Nasi Lemak", calories: 450, protein: 12, carbs: 60, date: getTodayDate() };
-                if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-                else { mealLogs.push(data); localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); renderHomeStats(); }
-                showScreen('home');
-            }
-        }, 500);
-    };
-    window.resetUpload = () => showScreen('home');
-    function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
-    document.getElementById('inpDate').value = getTodayDate();
-    document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
-    window.resetApp = async () => { 
-        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
-            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
-                // Cloud Deletion Logic
-                const uid = currentUser.uid;
-                const { deleteDoc, getDocs, doc } = window.fs_ops; // We need to export these from module
-                
-                try {
-                    // 1. Delete Meal Subcollection
-                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
-                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 2. Delete Weight Subcollection
-                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
-                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 3. Delete User Doc
-                    await deleteDoc(doc(db, "users", uid));
-                    
-                    alert("Akaun berjaya dipadam.");
-                    window.handleLogout();
-                } catch(e) {
-                    console.error(e);
-                    alert("Ralat memadam data: " + e.message);
-                }
-            } else {
-                // Local Deletion
-                localStorage.clear(); 
-                location.reload(); 
-            }
-        } 
+        const start = document.getElementById('onboardStartWeight').value;
+        const goal = document.getElementById('onboardGoalWeight').value;
+        if(!start) return alert("Sila isi berat.");
+        localStorage.setItem('userGoal', goal);
+        localStorage.setItem('userStartWeight', start); 
+        if (currentUser.uid.startsWith('offline_')) {
+            weightLogs.push({ weight: parseFloat(start), date: getTodayDate() });
+            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
+        } else if (window.fs && window.getCollection) {
+            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), { weight: parseFloat(start), date: getTodayDate() });
+        }
+        showScreen('home');
     };
     
-    // Save Weight
     window.saveWeight = () => {
         const w = document.getElementById('inpWeight').value;
         if (!w) return alert("Isi berat.");
         const data = { weight: parseFloat(w), date: document.getElementById('inpDate').value };
-        
         if (currentUser.uid.startsWith('offline_')) {
-            weightLogs.push(data);
-            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
-            renderWeightLogs();
+            weightLogs.push(data); localStorage.setItem('weightLogs', JSON.stringify(weightLogs)); renderWeightLogs();
         } else if (window.fs) {
             window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), data);
         }
@@ -572,6 +652,24 @@
         alert("Disimpan!");
     }
     document.getElementById('btnSaveWeight').onclick = window.saveWeight;
+
+    function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
+    document.getElementById('inpDate').value = getTodayDate();
+    document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
+    window.resetApp = async () => { 
+        if(confirm("AWAS: Padam SEMUA data?")) { 
+            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
+                const uid = currentUser.uid;
+                const { deleteDoc, getDocs, doc } = window.fs_ops; 
+                try {
+                    const mSnap = await getDocs(window.getCollection(uid, 'meals')); mSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    const wSnap = await getDocs(window.getCollection(uid, 'weights')); wSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    await deleteDoc(doc(db, "users", uid));
+                    alert("Akaun dipadam."); window.handleLogout();
+                } catch(e) { console.error(e); }
+            } else { localStorage.clear(); location.reload(); }
+        } 
+    };
   </script>
 
   <!-- FIREBASE MODULE (Runs Last) -->
@@ -618,7 +716,7 @@
     // --- EXPORTS TO WINDOW ---
     window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
     window.fs = { query, orderBy, limit, onSnapshot, addDoc };
-    window.fs_ops = { deleteDoc, getDocs, doc }; // Export for delete logic
+    window.fs_ops = { deleteDoc, getDocs, doc }; 
     
     // --- DATA SUBSCRIPTION ---
     window.subscribeToData = (uid) => {
@@ -643,17 +741,12 @@
     window.handleGoogleLogin = async () => {
         const btn = document.getElementById('googleBtn');
         const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi Google...";
-        stat.innerText = "Sila tunggu pop-up...";
-
+        btn.disabled = true; btn.innerText = "Menghubungi Google..."; stat.innerText = "Sila tunggu pop-up...";
         try {
             if (!window.isFirebaseReady) throw new Error("Firebase not ready");
             const result = await signInWithPopup(auth, new GoogleAuthProvider());
-            
             stat.innerText = "Berjaya! Mengalih...";
             window.handleLoginSuccess(result.user);
-            
         } catch (error) {
             console.error("Login Error:", error);
             if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
@@ -661,9 +754,7 @@
                 setTimeout(() => window.forceOfflineLogin('Google'), 1000);
             } else {
                 alert("Ralat: " + error.message);
-                btn.innerText = "Masuk dengan Google";
-                btn.disabled = false;
-                stat.innerText = "";
+                btn.innerText = "Masuk dengan Google"; btn.disabled = false; stat.innerText = "";
             }
         }
     };
@@ -671,10 +762,7 @@
     window.handleFacebookLogin = async () => {
         const btn = document.getElementById('fbBtn');
         const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi FB...";
-        stat.innerText = "Sila tunggu pop-up...";
-        
+        btn.disabled = true; btn.innerText = "Menghubungi FB..."; stat.innerText = "Sila tunggu pop-up...";
         try {
             if (!window.isFirebaseReady) throw new Error("Firebase not ready");
             const result = await signInWithPopup(auth, new FacebookAuthProvider());
@@ -687,9 +775,7 @@
                 setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
             } else {
                 alert("Ralat: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Masuk dengan Facebook";
-                stat.innerText = "";
+                btn.disabled = false; btn.innerText = "Masuk dengan Facebook"; stat.innerText = "";
             }
         }
     };
@@ -698,65 +784,38 @@
         const email = document.getElementById('loginEmail').value;
         const pass = document.getElementById('loginPass').value;
         if(!email || !pass) return alert("Sila isi info");
-        
         try {
             const res = await signInWithEmailAndPassword(auth, email, pass);
             window.handleLoginSuccess(res.user);
         } catch(error) {
-             // Fallback
             const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
             const u = users.find(x => x.email === email && x.pass === pass);
             if(u) {
                 localStorage.setItem('currentUser', JSON.stringify(u));
                 localStorage.setItem('isLoggedIn', 'true');
                 window.handleLoginSuccess(u);
-            } else {
-                alert("Gagal: " + error.message);
-            }
+            } else alert("Gagal: " + error.message);
         }
     };
 
-    // UPDATED SIGNUP HANDLER FOR NEW FIELDS
     window.handleEmailSignup = async () => {
         const name = document.getElementById('signupName').value;
-        const username = document.getElementById('signupUsername').value;
         const email = document.getElementById('signupEmail').value;
-        const job = document.getElementById('signupJob').value;
-        const age = document.getElementById('signupAge').value;
-        const weight = document.getElementById('signupWeight').value;
-        const goal = document.getElementById('signupGoal').value;
         const pass = document.getElementById('signupPass').value;
-
         if(!name || !email || !pass) return alert("Sila isi info wajib.");
-        
         try {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await updateProfile(res.user, { displayName: name });
-            
-            // Save extra data to Firestore
             if (window.isFirebaseReady) {
                 await setDoc(doc(db, "users", res.user.uid), {
-                    username, job, age, weight, goal, 
-                    email: email, 
-                    createdAt: new Date()
+                    username: document.getElementById('signupUsername').value,
+                    job: document.getElementById('signupJob').value,
+                    age: document.getElementById('signupAge').value,
+                    email: email, createdAt: new Date()
                 });
-                
-                // Add initial weight log
-                if (weight) {
-                    await addDoc(collection(db, "users", res.user.uid, "weights"), {
-                        weight: parseFloat(weight),
-                        date: new Date().toISOString().split('T')[0]
-                    });
-                }
             }
-            
-            // Save goal locally to skip onboarding
-            if (goal) localStorage.setItem('userGoal', goal);
-
             window.handleLoginSuccess(res.user);
-            
         } catch(error) {
-            // Fallback
             const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
             users.push({uid: "sim_"+Date.now(), displayName: name, email, pass});
             localStorage.setItem('simUsers', JSON.stringify(users));
