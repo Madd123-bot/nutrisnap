@@ -462,7 +462,10 @@
                 body: formData
             });
 
-            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API (" + logmealResponse.status + ")");
+            if (!logmealResponse.ok) {
+                 console.warn("LogMeal Error:", logmealResponse.status);
+                 throw new Error("API Limit / CORS");
+            }
 
             const logmealData = await logmealResponse.json();
 
@@ -481,9 +484,11 @@
             await fetchNutritionFromKalori(detectedName);
 
         } catch (error) {
-            console.error("AI Error:", error);
-            // Fallback: Only prompt if automatic fails
-            const manualName = prompt("AI Gagal (Masalah Rangkaian). Sila taip nama makanan:");
+            console.warn("AI Fallback:", error);
+            // FAILOVER: MANUAL ENTRY PROMPT
+            // If API fails (due to CORS/Quota), simply ask the user to name the food
+            // This ensures the camera isn't "useless"
+            const manualName = prompt("AI tidak dapat mengakses server (Sekatan CORS). Sila namakan makanan ini:");
             if (manualName) {
                 document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
                 await fetchNutritionFromKalori(manualName);
@@ -507,7 +512,6 @@
             const data = await response.json();
             document.getElementById('aiLoading').classList.add('hidden');
 
-            // Handle API Response structure (array or object with data array)
             const foodList = Array.isArray(data) ? data : (data.data ? data.data : []);
             
             if (foodList && foodList.length > 0) {
