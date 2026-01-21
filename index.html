@@ -311,6 +311,7 @@
                 <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
              </div>
           </div>
+          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Analisis AI<br>3. Dapatkan Data Nutrisi</p>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
           <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
           <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
@@ -448,20 +449,20 @@
         }
     });
 
-    // --- 4. REAL API LOGIC ---
+    // --- 4. REAL API LOGIC (AUTOMATIC) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile);
 
         try {
             // STEP 1: LogMeal (Detection)
-            const logmealResponse = await fetch('https://api.logmeal.es/v2/image/segmentation/complete', {
+            const logmealResponse = await fetch('https://api.logmeal.com/v2/image/segmentation/complete', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${LOGMEAL_TOKEN}` },
                 body: formData
             });
 
-            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API");
+            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API (" + logmealResponse.status + ")");
 
             const logmealData = await logmealResponse.json();
 
@@ -473,19 +474,22 @@
                  detectedName = logmealData.recognition_results[0].name;
             }
 
-            // AUTO-SEARCH: No prompt, just search directly.
-            // Note: If LogMeal returns English, we still try Kalori.my. 
-            // Kalori.my handles some English, but works best with Malay.
-            // We update the loading text to show what was found.
+            // AUTO-SEARCH: Update UI text
             document.querySelector('#aiLoading span').innerText = `Dikesan: ${detectedName}...`;
             
+            // Pass the detected name directly to Kalori API
             await fetchNutritionFromKalori(detectedName);
 
         } catch (error) {
             console.error("AI Error:", error);
-            // Fallback for demo purposes if API fails/CORS blocks
-            alert("Ralat AI: " + error.message + "\nSila cuba lagi atau taip nama makanan secara manual.");
-            document.getElementById('aiLoading').classList.add('hidden');
+            // Only prompt if automatic fails
+            const manualName = prompt("AI Gagal (Masalah Rangkaian). Sila taip nama makanan:");
+            if (manualName) {
+                document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
+                await fetchNutritionFromKalori(manualName);
+            } else {
+                document.getElementById('aiLoading').classList.add('hidden');
+            }
         }
     }
 
@@ -503,8 +507,11 @@
             const data = await response.json();
             document.getElementById('aiLoading').classList.add('hidden');
 
-            if (data && data.data && data.data.length > 0) {
-                 const food = data.data[0];
+            // Handle API Response structure (array or object with data array)
+            const foodList = Array.isArray(data) ? data : (data.data ? data.data : []);
+            
+            if (foodList && foodList.length > 0) {
+                 const food = foodList[0];
                  if (food) {
                     if(confirm(`Jumpa: ${food.name}\n\nKalori: ${food.calories}\nProtein: ${food.protein}g\nKarbo: ${food.carbohydrates}g\n\nSimpan?`)) {
                         const mealData = {
@@ -519,7 +526,6 @@
                     }
                  }
             } else {
-                // If not found, save as generic
                 if(confirm(`Tiada data untuk '${foodQuery}'. Simpan gambar sahaja?`)) {
                     saveMealData({ name: foodQuery, calories: 0, protein: 0, carbs: 0, date: getTodayDate(), image: base64ImageTemp });
                 }
@@ -848,4 +854,3 @@
   </script>
 </body>
 </html>
-
