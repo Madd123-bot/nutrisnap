@@ -311,7 +311,7 @@
                 <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
              </div>
           </div>
-          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Taip Nama Makanan<br>3. Dapatkan Data Nutrisi</p>
+          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Analisis AI<br>3. Dapatkan Data Nutrisi</p>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
           <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
           <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
@@ -449,23 +449,23 @@
         }
     });
 
-    // --- 4. REAL API LOGIC (AUTOMATIC) ---
+    // --- 4. REAL API LOGIC (CORS BYPASS) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile);
 
         try {
-            // STEP 1: LogMeal (Detection)
-            const logmealResponse = await fetch('https://api.logmeal.com/v2/image/segmentation/complete', {
+            // STEP 1: LogMeal with CORS Proxy
+            const proxy = "https://corsproxy.io/?";
+            const target = "https://api.logmeal.com/v2/image/segmentation/complete";
+            
+            const logmealResponse = await fetch(proxy + encodeURIComponent(target), {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${LOGMEAL_TOKEN}` },
                 body: formData
             });
 
-            if (!logmealResponse.ok) {
-                 console.warn("LogMeal Error:", logmealResponse.status);
-                 throw new Error("API Limit / CORS");
-            }
+            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API");
 
             const logmealData = await logmealResponse.json();
 
@@ -484,11 +484,9 @@
             await fetchNutritionFromKalori(detectedName);
 
         } catch (error) {
-            console.warn("AI Fallback:", error);
-            // FAILOVER: MANUAL ENTRY PROMPT
-            // If API fails (due to CORS/Quota), simply ask the user to name the food
-            // This ensures the camera isn't "useless"
-            const manualName = prompt("AI tidak dapat mengakses server (Sekatan CORS). Sila namakan makanan ini:");
+            console.error("AI Error:", error);
+            // Fallback for demo purposes if API fails/CORS blocks
+            const manualName = prompt("AI Gagal. Sila taip nama makanan:");
             if (manualName) {
                 document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
                 await fetchNutritionFromKalori(manualName);
