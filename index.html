@@ -449,7 +449,7 @@
         }
     });
 
-    // --- 4. REAL API LOGIC (CORS PROXY) ---
+    // --- 4. REAL API LOGIC (CORS BYPASS) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile);
@@ -486,7 +486,7 @@
         } catch (error) {
             console.error("AI Error:", error);
             // Fallback for demo purposes if API fails/CORS blocks
-            const manualName = prompt("AI Gagal (CORS). Sila taip nama makanan:");
+            const manualName = prompt("AI Gagal. Sila taip nama makanan:");
             if (manualName) {
                 document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
                 await fetchNutritionFromKalori(manualName);
