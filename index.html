@@ -487,12 +487,24 @@
             return;
         }
 
+        // Get the starting weight from localStorage or Firestore (if available in logs)
+        // Note: For simplicity, we assume the oldest log in the sorted list (last item) is the start weight
+        // if localStorage 'userStartWeight' isn't set.
+        let startWeight = parseFloat(localStorage.getItem('userStartWeight'));
+        
+        // If not set, try to find the oldest log
+        if (!startWeight && logs.length > 0) {
+            startWeight = logs[logs.length - 1].weight;
+        }
+
         let html = '';
         logs.forEach((log, index) => {
             // Get previous log (which is next in the sorted array, or null if this is the oldest)
             const prevLog = logs[index + 1];
             
             let trendHtml = '';
+            
+            // Calculate trend vs previous entry
             if (prevLog) {
                 const diff = log.weight - prevLog.weight;
                 if (diff < 0) {
@@ -503,13 +515,30 @@
                     trendHtml = `<span class="trend-same">—</span>`;
                 }
             } else {
+                // First entry -> No trend
                 trendHtml = `<span style="color:#ccc; font-size:12px;">Mula</span>`;
+            }
+
+            // Calculate total loss vs start
+            let totalLossHtml = '';
+            if (startWeight) {
+                const totalDiff = log.weight - startWeight;
+                const sign = totalDiff > 0 ? '+' : '';
+                const color = totalDiff > 0 ? 'red' : 'green';
+                // Only show if it's not the start weight itself (approx check)
+                if (Math.abs(totalDiff) > 0.01) {
+                   totalLossHtml = `<span style="font-size:10px; color:${color}; margin-left:5px;">(${sign}${totalDiff.toFixed(1)} total)</span>`;
+                }
             }
 
             html += `
                 <div class="list-item">
                     <div class="item-date">${log.date}</div>
-                    <div class="item-val">${log.weight} kg ${trendHtml}</div>
+                    <div class="item-val">
+                        ${log.weight} kg 
+                        ${trendHtml}
+                        ${totalLossHtml}
+                    </div>
                 </div>
             `;
         });
@@ -551,8 +580,21 @@
 
     // --- 5. UTILS ---
     window.saveOnboarding = () => {
-        const val = document.getElementById('onboardGoalWeight').value;
-        if(val) { localStorage.setItem('userGoal', val); showScreen('home'); }
+        const start = document.getElementById('onboardStartWeight').value;
+        const goal = document.getElementById('onboardGoalWeight').value;
+        if(!start) return alert("Sila isi berat.");
+        
+        localStorage.setItem('userGoal', goal);
+        localStorage.setItem('userStartWeight', start); // SAVE START WEIGHT EXPLICITLY
+        
+        // Save initial
+        if (currentUser.uid.startsWith('offline_')) {
+            weightLogs.push({ weight: parseFloat(start), date: getTodayDate() });
+            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
+        } else if (window.fs && window.getCollection) {
+            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), { weight: parseFloat(start), date: getTodayDate() });
+        }
+        showScreen('home');
     };
     window.triggerCamera = () => document.getElementById('cameraInput').click();
     window.triggerGallery = () => document.getElementById('galleryInput').click();
@@ -815,6 +857,9 @@
         try {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await updateProfile(res.user, { displayName: name });
+            
+            // SAVE START WEIGHT LOCALLY TOO
+            if (weight) localStorage.setItem('userStartWeight', weight);
             
             // Save extra data to Firestore
             if (window.isFirebaseReady) {
