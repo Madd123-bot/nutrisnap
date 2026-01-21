@@ -449,24 +449,28 @@
         }
     });
 
-    // --- 4. REAL API LOGIC ---
+    // --- 4. REAL API LOGIC (UPDATED FOR LOGMEAL) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile);
 
         try {
-            // STEP 1: LogMeal (Detection)
-            const logmealResponse = await fetch('https://api.logmeal.es/v2/image/segmentation/complete', {
+            // Updated URL to .com based on OpenAPI spec provided earlier
+            const logmealResponse = await fetch('https://api.logmeal.com/v2/image/segmentation/complete', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${LOGMEAL_TOKEN}` },
                 body: formData
             });
 
-            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API");
+            if (!logmealResponse.ok) {
+                // Throw specific error if auth fails to help user debug
+                if (logmealResponse.status === 401) throw new Error("API Key LogMeal Tidak Sah");
+                throw new Error("Gagal hubungi LogMeal API");
+            }
 
             const logmealData = await logmealResponse.json();
 
-            // STEP 2: Extract Food Name
+            // Extract Name
             let detectedName = "Makanan Tidak Dikenali";
             if (logmealData.food_family && logmealData.food_family.length > 0) {
                  detectedName = logmealData.food_family[0].name;
@@ -474,14 +478,21 @@
                  detectedName = logmealData.recognition_results[0].name;
             }
 
-            // STEP 3: Get Nutrition from Kalori.my
+            // AUTO-SEARCH NUTRITION
+            // Update UI to show progress
+            document.querySelector('#aiLoading span').innerText = `Dikesan: ${detectedName}...`;
             await fetchNutritionFromKalori(detectedName);
 
         } catch (error) {
             console.error("AI Error:", error);
-            // Fallback for demo purposes if API fails/CORS blocks
-            alert("Ralat AI: " + error.message + "\nSila cuba lagi atau taip nama makanan secara manual.");
-            document.getElementById('aiLoading').classList.add('hidden');
+            // Fallback to manual entry if API fails
+            const manualName = prompt("AI Gagal (Masalah Rangkaian/Key). Sila taip nama makanan:");
+            if (manualName) {
+                document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
+                await fetchNutritionFromKalori(manualName);
+            } else {
+                document.getElementById('aiLoading').classList.add('hidden');
+            }
         }
     }
 
@@ -499,13 +510,8 @@
             const data = await response.json();
             document.getElementById('aiLoading').classList.add('hidden');
 
-            if (data && data.data && data.data.length > 0) { // Updated to check .data property based on typical structure
-                 // Adjusting based on user snippet provided earlier which used data[0] directly on response
-                 // If the API returns { data: [...] }, we use data.data[0]. 
-                 // If it returns [...] directly, we use data[0]. 
-                 // Safely handling both:
-                 const food = Array.isArray(data) ? data[0] : (data.data ? data.data[0] : null);
-
+            if (data && data.data && data.data.length > 0) {
+                 const food = data.data[0];
                  if (food) {
                     if(confirm(`Jumpa: ${food.name}\n\nKalori: ${food.calories}\nProtein: ${food.protein}g\nKarbo: ${food.carbohydrates}g\n\nSimpan?`)) {
                         const mealData = {
@@ -518,11 +524,10 @@
                         };
                         saveMealData(mealData);
                     }
-                 } else {
-                    throw new Error("Format data tidak dikenali");
                  }
             } else {
-                if(confirm(`Maaf, tiada data untuk '${foodQuery}'. Simpan nama & gambar sahaja?`)) {
+                // If not found, save as generic
+                if(confirm(`Tiada data untuk '${foodQuery}'. Simpan gambar sahaja?`)) {
                     saveMealData({ name: foodQuery, calories: 0, protein: 0, carbs: 0, date: getTodayDate(), image: base64ImageTemp });
                 }
             }
@@ -546,9 +551,9 @@
                 document.getElementById('uploadPreview').src = base64ImageTemp;
                 document.getElementById('uploadPreview').classList.remove('hidden');
                 document.getElementById('uploadPlaceholder').classList.add('hidden');
-                document.getElementById('aiLoading').classList.remove('hidden'); // Show spinner
+                document.getElementById('aiLoading').classList.remove('hidden'); 
                 
-                // CALL REAL API
+                // CALL REAL API FUNCTION
                 processFoodScan(file);
             }
             reader.readAsDataURL(file);
