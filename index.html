@@ -200,11 +200,6 @@
              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
              Masuk dengan Google
           </button>
-
-          <button id="fbBtn" class="fb-btn" onclick="window.handleFacebookLogin()">
-             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
-             Masuk dengan Facebook
-          </button>
           
           <div id="loginStatus" class="status-text"></div>
 
@@ -311,7 +306,7 @@
                 <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
              </div>
           </div>
-          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Taip Nama Makanan<br>3. Dapatkan Data Nutrisi</p>
+          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Analisis AI<br>3. Dapatkan Data Nutrisi</p>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
           <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
           <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
@@ -449,23 +444,23 @@
         }
     });
 
-    // --- 4. REAL API LOGIC (AUTOMATIC FALLBACK) ---
+    // --- 4. REAL API LOGIC (CORS PROXY + LOGMEAL) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile);
 
         try {
-            // STEP 1: LogMeal (Detection)
-            const logmealResponse = await fetch('https://api.logmeal.com/v2/image/segmentation/complete', {
+            // STEP 1: LogMeal with CORS Proxy
+            const proxy = "https://corsproxy.io/?";
+            const target = "https://api.logmeal.com/v2/image/segmentation/complete";
+            
+            const logmealResponse = await fetch(proxy + encodeURIComponent(target), {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${LOGMEAL_TOKEN}` },
                 body: formData
             });
 
-            if (!logmealResponse.ok) {
-                 console.warn("LogMeal Error:", logmealResponse.status);
-                 throw new Error("API Limit / CORS");
-            }
+            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API");
 
             const logmealData = await logmealResponse.json();
 
@@ -477,18 +472,16 @@
                  detectedName = logmealData.recognition_results[0].name;
             }
 
-            // AUTO-SEARCH: Update UI text
+            // UPDATE LOADING UI
             document.querySelector('#aiLoading span').innerText = `Dikesan: ${detectedName}...`;
             
-            // Pass the detected name directly to Kalori API
+            // STEP 3: CALL KALORI API DIRECTLY (NO PROMPT)
             await fetchNutritionFromKalori(detectedName);
 
         } catch (error) {
-            console.warn("AI Fallback:", error);
-            // FAILOVER: MANUAL ENTRY PROMPT
-            // If API fails (due to CORS/Quota), simply ask the user to name the food
-            // This ensures the camera isn't "useless"
-            const manualName = prompt("AI tidak dapat mengakses server (Sekatan CORS). Sila namakan makanan ini:");
+            console.error("AI Error:", error);
+            // Fallback: If LogMeal fails, ask user to type manually
+            const manualName = prompt("AI Gagal (Masalah Rangkaian). Sila taip nama makanan:");
             if (manualName) {
                 document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
                 await fetchNutritionFromKalori(manualName);
@@ -517,7 +510,8 @@
             if (foodList && foodList.length > 0) {
                  const food = foodList[0];
                  if (food) {
-                    if(confirm(`Jumpa: ${food.name}\n\nKalori: ${food.calories}\nProtein: ${food.protein}g\nKarbo: ${food.carbohydrates}g\n\nSimpan?`)) {
+                    // FINAL CONFIRMATION
+                    if(confirm(`NutriSnap Mengesan:\n${food.name}\n\nKalori: ${food.calories} kcal\nProtein: ${food.protein}g\nKarbo: ${food.carbohydrates}g\n\nSimpan rekod ini?`)) {
                         const mealData = {
                             name: food.name,
                             calories: parseFloat(food.calories),
@@ -530,7 +524,8 @@
                     }
                  }
             } else {
-                if(confirm(`Tiada data untuk '${foodQuery}'. Simpan gambar sahaja?`)) {
+                // Not found in Kalori DB, save as generic name detected by LogMeal
+                if(confirm(`Tiada data nutrisi untuk '${foodQuery}'. Simpan gambar sahaja?`)) {
                     saveMealData({ name: foodQuery, calories: 0, protein: 0, carbs: 0, date: getTodayDate(), image: base64ImageTemp });
                 }
             }
@@ -556,7 +551,7 @@
                 document.getElementById('uploadPlaceholder').classList.add('hidden');
                 document.getElementById('aiLoading').classList.remove('hidden'); // Show spinner
                 
-                // CALL REAL API
+                // START REAL DETECTION
                 processFoodScan(file);
             }
             reader.readAsDataURL(file);
@@ -685,7 +680,7 @@
   <!-- FIREBASE MODULE (Runs Last) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS ANDA ---
@@ -765,27 +760,6 @@
             } else {
                 alert("Ralat: " + error.message);
                 btn.innerText = "Masuk dengan Google"; btn.disabled = false; stat.innerText = "";
-            }
-        }
-    };
-
-    window.handleFacebookLogin = async () => {
-        const btn = document.getElementById('fbBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true; btn.innerText = "Menghubungi FB..."; stat.innerText = "Sila tunggu pop-up...";
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new FacebookAuthProvider());
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.disabled = false; btn.innerText = "Masuk dengan Facebook"; stat.innerText = "";
             }
         }
     };
