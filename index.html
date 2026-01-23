@@ -167,15 +167,10 @@
     .spinner { width:30px; height:30px; border:3px solid var(--soft); border-top:3px solid var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-
-    /* --- RESPONSIVE MEDIA QUERIES --- */
+    /* Media Queries */
     @media (min-width: 600px) {
-        body {
-            display: flex; justify-content: center; align-items: center; background-color: #eef2f6;
-        }
-        #app {
-            width: 100%; height: 90vh; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
+        body { display: flex; justify-content: center; align-items: center; background-color: #eef2f6; }
+        #app { width: 100%; height: 90vh; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
     }
   </style>
 </head>
@@ -200,6 +195,11 @@
              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
              Masuk dengan Google
           </button>
+
+          <button id="fbBtn" class="fb-btn" onclick="window.handleFacebookLogin()">
+             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
+             Masuk dengan Facebook
+          </button>
           
           <div id="loginStatus" class="status-text"></div>
 
@@ -209,13 +209,6 @@
           
           <div class="login-hint" style="margin-top:15px; font-size:14px; color:#888;">
             <p>Tiada akaun? <a href="#" style="color:var(--primary); text-decoration:none; font-weight:700;" data-nav="emailSignup">Daftar sekarang</a></p>
-          </div>
-
-          <!-- DEV BYPASS BUTTON -->
-          <div style="margin-top:20px; border-top:1px dashed #eee; padding-top:10px;">
-            <button style="background:transparent; color:#bbb; border:1px dashed #ccc; font-size:12px; cursor:pointer;" onclick="window.forceOfflineLogin()">
-              🛠️ [Pintas] Masuk Tanpa Login
-            </button>
           </div>
         </div>
       </section>
@@ -231,40 +224,16 @@
         </div>
       </section>
 
-      <!-- 3. EMAIL SIGNUP (UPDATED FORM) -->
+      <!-- 3. EMAIL SIGNUP -->
       <section id="emailSignup" class="screen">
         <div class="login-card">
           <h2>Daftar Baru</h2>
-          
           <label class="inp-label">Nama Penuh</label>
           <input type="text" id="signupName" placeholder="Ahmad Albab" />
-
-          <label class="inp-label">Nama Pengguna (Username)</label>
-          <input type="text" id="signupUsername" placeholder="ahmad_fit" />
-          
           <label class="inp-label">E-mel</label>
           <input type="email" id="signupEmail" placeholder="nama@contoh.com" />
-          
-          <label class="inp-label">Pekerjaan</label>
-          <input type="text" id="signupJob" placeholder="Pelajar" />
-
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-              <div>
-                  <label class="inp-label">Umur</label>
-                  <input type="number" id="signupAge" placeholder="25" />
-              </div>
-              <div>
-                  <label class="inp-label">Berat Semasa</label>
-                  <input type="number" id="signupWeight" placeholder="70 kg" step="0.1" />
-              </div>
-          </div>
-
-          <label class="inp-label">Berat Matlamat (kg)</label>
-          <input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
-          
           <label class="inp-label">Kata Laluan</label>
           <input type="password" id="signupPass" placeholder="********" />
-          
           <button class="primary" onclick="window.handleEmailSignup()">Daftar Sekarang</button>
           <button class="secondary" data-nav="login">Kembali</button>
         </div>
@@ -301,12 +270,12 @@
           <h2>Analisis Makanan</h2>
           <div class="upload-box">
              <img id="uploadPreview" class="preview-img hidden" src="" alt="Preview">
-             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span>Mencari Data...</span></div>
+             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span>Menganalisis...</span></div>
              <div id="uploadPlaceholder">
                 <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
              </div>
           </div>
-          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Analisis AI<br>3. Dapatkan Data Nutrisi</p>
+          <p style="color:var(--muted);">1. Ambil Gambar<br>2. AI Mengesan<br>3. Data Nutrisi Automatik</p>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
           <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
           <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
@@ -444,7 +413,7 @@
         }
     });
 
-    // --- 4. REAL API LOGIC (CORS PROXY + LOGMEAL) ---
+    // --- 4. REAL API LOGIC (CORS PROXY + AUTO-SEARCH) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile);
@@ -460,28 +429,30 @@
                 body: formData
             });
 
-            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API");
+            if (!logmealResponse.ok) throw new Error("Gagal hubungi LogMeal API (" + logmealResponse.status + ")");
 
             const logmealData = await logmealResponse.json();
 
             // STEP 2: Extract Food Name
-            let detectedName = "Makanan Tidak Dikenali";
+            let detectedName = "";
             if (logmealData.food_family && logmealData.food_family.length > 0) {
                  detectedName = logmealData.food_family[0].name;
             } else if (logmealData.recognition_results && logmealData.recognition_results.length > 0) {
                  detectedName = logmealData.recognition_results[0].name;
             }
 
-            // UPDATE LOADING UI
+            if (!detectedName) throw new Error("Tiada makanan dikesan.");
+
+            // AUTO-SEARCH: Update UI text
             document.querySelector('#aiLoading span').innerText = `Dikesan: ${detectedName}...`;
             
-            // STEP 3: CALL KALORI API DIRECTLY (NO PROMPT)
+            // STEP 3: Pass name directly to Kalori.my
             await fetchNutritionFromKalori(detectedName);
 
         } catch (error) {
             console.error("AI Error:", error);
-            // Fallback: If LogMeal fails, ask user to type manually
-            const manualName = prompt("AI Gagal (Masalah Rangkaian). Sila taip nama makanan:");
+            // Fallback
+            const manualName = prompt("AI Gagal (CORS). Sila taip nama makanan:");
             if (manualName) {
                 document.querySelector('#aiLoading span').innerText = `Mencari ${manualName}...`;
                 await fetchNutritionFromKalori(manualName);
@@ -505,6 +476,7 @@
             const data = await response.json();
             document.getElementById('aiLoading').classList.add('hidden');
 
+            // Handle API Response structure
             const foodList = Array.isArray(data) ? data : (data.data ? data.data : []);
             
             if (foodList && foodList.length > 0) {
@@ -524,7 +496,7 @@
                     }
                  }
             } else {
-                // Not found in Kalori DB, save as generic name detected by LogMeal
+                // Not found -> Save generic
                 if(confirm(`Tiada data nutrisi untuk '${foodQuery}'. Simpan gambar sahaja?`)) {
                     saveMealData({ name: foodQuery, calories: 0, protein: 0, carbs: 0, date: getTodayDate(), image: base64ImageTemp });
                 }
@@ -551,7 +523,7 @@
                 document.getElementById('uploadPlaceholder').classList.add('hidden');
                 document.getElementById('aiLoading').classList.remove('hidden'); // Show spinner
                 
-                // START REAL DETECTION
+                // CALL REAL API AUTOMATICALLY
                 processFoodScan(file);
             }
             reader.readAsDataURL(file);
@@ -680,7 +652,7 @@
   <!-- FIREBASE MODULE (Runs Last) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS ANDA ---
@@ -760,6 +732,27 @@
             } else {
                 alert("Ralat: " + error.message);
                 btn.innerText = "Masuk dengan Google"; btn.disabled = false; stat.innerText = "";
+            }
+        }
+    };
+
+    window.handleFacebookLogin = async () => {
+        const btn = document.getElementById('fbBtn');
+        const stat = document.getElementById('loginStatus');
+        btn.disabled = true; btn.innerText = "Menghubungi FB..."; stat.innerText = "Sila tunggu pop-up...";
+        try {
+            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
+            const result = await signInWithPopup(auth, new FacebookAuthProvider());
+            stat.innerText = "Berjaya! Mengalih...";
+            window.handleLoginSuccess(result.user);
+        } catch (error) {
+            console.error("Login Error:", error);
+            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
+                stat.innerText = "Domain Blocked. Entering Offline Mode...";
+                setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
+            } else {
+                alert("Ralat: " + error.message);
+                btn.disabled = false; btn.innerText = "Masuk dengan Facebook"; stat.innerText = "";
             }
         }
     };
