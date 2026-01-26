@@ -2,22 +2,22 @@
    NUTRISNAP MAIN LOGIC
    ========================================= */
 
-// --- KONFIGURASI API ---
+// --- KONFIGURASI API (KUNCI ANDA) ---
 const LOGMEAL_TOKEN = "36e194aa6e229b5dd49edbf2a7add2f00a792a21";
 const KALORI_API_KEY = "kal_97f41a3a19ba02ffd1eac01bc2338265fd3a1db8c51df3e4e1c96c35f89d78af";
 
-// Elemen UI
+// Elemen UI Global
 const screens = Array.from(document.querySelectorAll('.screen'));
 const mainNav = document.querySelector('.bottombar');
 const userIcon = document.getElementById('userIcon');
 const fabBtn = document.getElementById('fabBtn');
 
-// --- FUNGSI NAVIGASI ---
+// --- 1. FUNGSI NAVIGASI ---
 function showScreen(id) {
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const isAuthScreen = ['login', 'emailLogin', 'emailSignup', 'onboarding'].includes(id);
 
-    // Hide Nav on Auth Screens
+    // Sorok navigasi di skrin login
     if (isAuthScreen || !isLoggedIn) {
         if(mainNav) mainNav.classList.add('hidden');
         if(userIcon) userIcon.classList.add('hidden');
@@ -29,38 +29,59 @@ function showScreen(id) {
         if(fabBtn) fabBtn.classList.remove('hidden');
     }
 
+    // Tukar skrin aktif
     screens.forEach(s => {
         if (s.id === id) s.classList.add('active');
         else s.classList.remove('active');
     });
     
-    // Update active state on bottom bar buttons
+    // Update butang bawah
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.nav === id);
     });
 
-    // Render data specific pages
+    // Render data jika perlu
     if(id === 'home') renderHomeStats();
-    if(id === 'analysis') renderMeals(); // Assuming 'analysis' is the diary page
+    if(id === 'analysis') renderMeals(); 
 }
 
-// Event Listeners for Navigation
-document.querySelectorAll('[data-nav]').forEach(el => {
-    el.addEventListener('click', (e) => {
-        e.preventDefault();
-        showScreen(el.dataset.nav);
+// Pasang event listener untuk navigasi
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-nav]').forEach(el => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = el.dataset.nav;
+            if(target) showScreen(target);
+        });
     });
+
+    // Pasang listener kamera sebaik sahaja page load
+    setupCameraListeners();
+    
+    // Cek login awal
+    if(localStorage.getItem('isLoggedIn') === 'true') {
+        showScreen('home');
+    } else {
+        showScreen('login');
+    }
 });
 
 
-// --- FUNGSI KAMERA & AI ---
+// --- 2. FUNGSI KAMERA & AI ---
 
-// 1. Listen for File Input Changes
-const cameraInput = document.getElementById('cameraInput');
-const galleryInput = document.getElementById('galleryInput');
+function setupCameraListeners() {
+    const cameraInput = document.getElementById('cameraInput');
+    const galleryInput = document.getElementById('galleryInput');
 
-if(cameraInput) cameraInput.addEventListener('change', handleImageSelect);
-if(galleryInput) galleryInput.addEventListener('change', handleImageSelect);
+    if(cameraInput) {
+        cameraInput.addEventListener('change', handleImageSelect);
+        console.log("Kamera bersedia");
+    }
+    if(galleryInput) {
+        galleryInput.addEventListener('change', handleImageSelect);
+        console.log("Galeri bersedia");
+    }
+}
 
 function handleImageSelect(e) {
     if (e.target.files && e.target.files[0]) {
@@ -68,7 +89,7 @@ function handleImageSelect(e) {
         const reader = new FileReader();
 
         reader.onload = function(event) {
-            // Show Preview
+            // Tunjuk Preview
             const preview = document.getElementById('uploadPreview');
             const placeholder = document.getElementById('uploadPlaceholder');
             const loading = document.getElementById('aiLoading');
@@ -78,25 +99,25 @@ function handleImageSelect(e) {
                 preview.classList.remove('hidden');
             }
             if(placeholder) placeholder.classList.add('hidden');
-            if(loading) loading.classList.remove('hidden'); // Show spinner
+            if(loading) loading.classList.remove('hidden'); // Tunjuk spinner
 
-            // Start AI Process
+            // Mula Proses AI
             processFoodImage(file);
         }
         reader.readAsDataURL(file);
     }
 }
 
-// 2. Process Image with LogMeal API
+// Panggil LogMeal API (Melalui Proxy untuk elak CORS)
 async function processFoodImage(imageFile) {
-    const loadingText = document.querySelector('#aiLoading p');
+    const loadingText = document.querySelector('#aiLoading p') || document.querySelector('#aiLoading span'); // Cari teks loading
     if(loadingText) loadingText.innerText = "Menganalisis Gambar...";
 
     let formData = new FormData();
     formData.append('image', imageFile, 'food.jpg');
 
     try {
-        // LogMeal API via CORS Proxy
+        console.log("Menghantar ke LogMeal...");
         const proxy = "https://corsproxy.io/?";
         const targetUrl = "https://api.logmeal.com/v2/image/segmentation/complete";
         
@@ -108,11 +129,15 @@ async function processFoodImage(imageFile) {
             body: formData
         });
 
-        if (!response.ok) throw new Error("LogMeal API Error: " + response.status);
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`LogMeal Error (${response.status}): ${errText}`);
+        }
 
         const data = await response.json();
+        console.log("LogMeal Data:", data);
         
-        // Extract Food Name
+        // Cari nama makanan
         let detectedName = null;
         if (data.food_family && data.food_family.length > 0) {
             detectedName = data.food_family[0].name;
@@ -122,22 +147,25 @@ async function processFoodImage(imageFile) {
 
         if (!detectedName) throw new Error("Makanan tidak dikenali.");
 
-        // 3. Search Nutrition in Kalori.my
+        // Cari Nutrisi
         if(loadingText) loadingText.innerText = `Dikesan: ${detectedName}...`;
         await searchNutrition(detectedName);
 
     } catch (error) {
         console.error(error);
+        alert("Ralat AI: " + error.message);
         handleAiError();
     }
 }
 
-// 3. Search Nutrition Data
+// Cari Data Nutrisi (Kalori.my)
 async function searchNutrition(foodName) {
-    const loadingText = document.querySelector('#aiLoading p');
+    const loadingText = document.querySelector('#aiLoading p') || document.querySelector('#aiLoading span');
     if(loadingText) loadingText.innerText = "Mencari Data Nutrisi...";
 
     try {
+        // Guna proxy juga untuk Kalori.my jika perlu (kadang-kadang browser block)
+        // Cuba direct dulu, jika gagal baru fallback
         const url = `https://api.kalori.my/v1/foods/search?q=${encodeURIComponent(foodName)}`;
         
         const response = await fetch(url, {
@@ -149,19 +177,19 @@ async function searchNutrition(foodName) {
         });
 
         const json = await response.json();
+        console.log("Kalori Data:", json);
         
-        // Hide Loading
+        // Sembunyi Loading
         const loading = document.getElementById('aiLoading');
         if(loading) loading.classList.add('hidden');
 
-        // Check Results
-        // Kalori.my usually returns { data: [...] } or array directly
+        // Proses Data
         const foodList = json.data || json;
         
         if (foodList && foodList.length > 0) {
             const food = foodList[0];
             
-            // Confirm with User
+            // Konfirmasi Pengguna
             const msg = `AI Menjumpai:\n${food.name}\n\nKalori: ${food.calories} kcal\nProtein: ${food.protein}g\nKarbo: ${food.carbohydrates}g\n\nSimpan ke Diari?`;
             
             if (confirm(msg)) {
@@ -177,7 +205,6 @@ async function searchNutrition(foodName) {
                 resetUpload();
             }
         } else {
-            // Not found in database
             if(confirm(`Data nutrisi untuk '${foodName}' tidak dijumpai.\nSimpan gambar sahaja?`)) {
                 saveMeal({
                     name: foodName,
@@ -198,10 +225,10 @@ async function searchNutrition(foodName) {
 }
 
 function handleAiError() {
-    // Fallback if AI fails completely
     const loading = document.getElementById('aiLoading');
     if(loading) loading.classList.add('hidden');
     
+    // Fallback Manual
     const manualName = prompt("AI Gagal. Sila masukkan nama makanan secara manual:");
     if (manualName) {
         searchNutrition(manualName);
@@ -210,7 +237,8 @@ function handleAiError() {
     }
 }
 
-// --- FUNGSI DATA ---
+
+// --- 3. PENGURUSAN DATA ---
 
 function saveMeal(meal) {
     const meals = JSON.parse(localStorage.getItem('mealLogs') || '[]');
@@ -225,13 +253,15 @@ function resetUpload() {
     const preview = document.getElementById('uploadPreview');
     const placeholder = document.getElementById('uploadPlaceholder');
     const loading = document.getElementById('aiLoading');
+    const camInput = document.getElementById('cameraInput');
+    const galInput = document.getElementById('galleryInput');
     
     if(preview) { preview.src = ""; preview.classList.add('hidden'); }
     if(placeholder) placeholder.classList.remove('hidden');
     if(loading) loading.classList.add('hidden');
     
-    if(cameraInput) cameraInput.value = "";
-    if(galleryInput) galleryInput.value = "";
+    if(camInput) camInput.value = "";
+    if(galInput) galInput.value = "";
 }
 
 function renderHomeStats() {
@@ -249,16 +279,19 @@ function renderHomeStats() {
         listHtml += `<div class="list-item"><div class="item-val">${m.name}</div><div class="item-date">${m.calories} kcal</div></div>`;
     });
 
-    document.getElementById('calBalance').innerText = cal.toFixed(0);
-    document.getElementById('protBalance').innerText = prot.toFixed(0);
-    document.getElementById('carbBalance').innerText = carb.toFixed(0);
-    
+    // Update UI jika elemen wujud
+    const elCal = document.getElementById('calBalance');
+    const elProt = document.getElementById('protBalance');
+    const elCarb = document.getElementById('carbBalance');
     const listEl = document.getElementById('recentMealsList');
+
+    if(elCal) elCal.innerText = cal.toFixed(0);
+    if(elProt) elProt.innerText = prot.toFixed(0);
+    if(elCarb) elCarb.innerText = carb.toFixed(0);
     if(listEl) listEl.innerHTML = listHtml || '<div style="text-align:center; color:#999; padding:10px;">Tiada rekod hari ini</div>';
 }
 
 function renderMeals() {
-    // Diary render logic here (if needed for 'analysis' page)
     const container = document.getElementById('mealsContainer');
     if(!container) return;
     
@@ -270,28 +303,21 @@ function renderMeals() {
         return;
     }
 
-    // Group by date, etc. (Simplified for now)
+    // Paparkan list (Reverse supaya terkini di atas)
     meals.slice().reverse().forEach(m => {
         const div = document.createElement('div');
         div.className = 'list-item';
+        // Guna style flex untuk layout gambar & teks
         div.innerHTML = `
             <div style="display:flex; align-items:center;">
-                ${m.image ? `<img src="${m.image}" style="width:40px; height:40px; border-radius:5px; margin-right:10px; object-fit:cover;">` : ''}
+                ${m.image ? `<img src="${m.image}" style="width:50px; height:50px; border-radius:8px; margin-right:12px; object-fit:cover;">` : ''}
                 <div>
-                    <div style="font-weight:bold;">${m.name}</div>
+                    <div style="font-weight:bold; color:#32325d;">${m.name}</div>
                     <div style="font-size:12px; color:#888;">${m.date}</div>
                 </div>
             </div>
-            <div style="font-weight:bold;">${m.calories} kcal</div>
+            <div style="font-weight:bold; color:#377CFF;">${m.calories} kcal</div>
         `;
         container.appendChild(div);
     });
-}
-
-// --- INITIALIZATION ---
-// Check login status on load
-if (localStorage.getItem('isLoggedIn') === 'true') {
-    showScreen('home');
-} else {
-    showScreen('login');
 }
