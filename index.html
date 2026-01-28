@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>NutriSnap</title>
+  <title>NutriSnap AI</title>
   
   <style>
-    /* --- CSS UTAMA (Sama seperti sebelum ini) --- */
+    /* --- CSS UTAMA --- */
     :root {
       --bg: #f0f7ff;
       --card: #ffffff;
@@ -17,6 +17,7 @@
       --accent: #2dce89;
       --accent-gradient: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
       --danger: #f5365c;
+      --facebook: #1877F2;
       --radius: 16px; 
       font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
@@ -73,6 +74,7 @@
     button:active { transform: scale(0.97); }
     .primary { background: var(--primary-gradient); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
     .secondary { background: var(--soft); color: var(--primary); }
+    .fb-btn { background: var(--facebook); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
     .accent-btn { background: var(--accent-gradient); color: white; }
     .danger-btn { background: #fff0f3; color: var(--danger); }
     
@@ -165,10 +167,15 @@
     .spinner { width:30px; height:30px; border:3px solid var(--soft); border-top:3px solid var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:10px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    /* Media Queries */
+
+    /* --- RESPONSIVE MEDIA QUERIES --- */
     @media (min-width: 600px) {
-        body { display: flex; justify-content: center; align-items: center; background-color: #eef2f6; }
-        #app { width: 100%; height: 90vh; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        body {
+            display: flex; justify-content: center; align-items: center; background-color: #eef2f6;
+        }
+        #app {
+            width: 100%; height: 90vh; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
     }
   </style>
 </head>
@@ -437,7 +444,7 @@
         }
     });
 
-    // --- 4. REAL API LOGIC (CORS PROXY + AUTO) ---
+    // --- 4. REAL API LOGIC (CORS PROXY + AUTO-SEARCH) ---
     async function processFoodScan(imageFile) {
         let formData = new FormData();
         formData.append('image', imageFile, 'image.jpg'); 
@@ -675,7 +682,7 @@
   <!-- FIREBASE MODULE (Runs Last) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS ANDA ---
