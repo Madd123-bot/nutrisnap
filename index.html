@@ -159,31 +159,26 @@
       <div id="userIcon" class="user-icon hidden" data-nav="profile">A</div>
     </header>
 
-    <!-- Main Screens -->
     <main class="screens">
-      
-      <!-- 1. LOGIN SCREEN -->
+      <!-- Login -->
       <section id="login" class="screen active">
         <div class="login-card">
           <h1>Selamat Datang</h1>
-          <p style="color:#8898aa;">Sila log masuk untuk menyimpan data.</p>
+          <p>Sila log masuk untuk meneruskan.</p>
           
           <button id="googleBtn" class="primary" onclick="window.handleGoogleLogin()">
              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
-             Masuk dengan Google
+             Log Masuk dengan Akaun
           </button>
           
           <div id="loginStatus" class="status-text"></div>
-
           <div class="divider">ATAU</div>
-          
-          <button class="secondary" data-nav="emailLogin">Log Masuk dengan Akaun</button>
+          <button class="secondary" data-nav="emailLogin">Log Masuk dengan E-mel</button>
           
           <div class="login-hint" style="margin-top:15px; font-size:14px; color:#888;">
             <p>Tiada akaun? <a href="#" style="color:var(--primary); text-decoration:none; font-weight:700;" data-nav="emailSignup">Daftar sekarang</a></p>
           </div>
-
-          <!-- DEV BYPASS BUTTON -->
+          
           <div style="margin-top:20px; border-top:1px dashed #eee; padding-top:10px;">
             <button style="background:transparent; color:#bbb; border:1px dashed #ccc; font-size:12px; cursor:pointer;" onclick="window.forceOfflineLogin()">
               🛠️ [Pintas] Masuk Tanpa Login
@@ -286,15 +281,15 @@
     </nav>
   </div>
 
-  <!-- SINGLE LOGIC SCRIPT (TYPE MODULE) -->
+  <!-- SINGLE LOGIC SCRIPT (MODUL) -->
   <script type="module">
     // --- IMPORT FIREBASE ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS (User Provided) ---
-    const GEMINI_API_KEY = "AIzaSyBE0eH3S3xoDW-ulglwjaLupkJb5vUQETw"; // PASTE GEMINI KEY
+    const GEMINI_API_KEY = ""; // PASTE GEMINI KEY
     const KALORI_API_KEY = "kal_97f41a3a19ba02ffd1eac01bc2338265fd3a1db8c51df3e4e1c96c35f89d78af";
     const firebaseConfig = {
       apiKey: "AIzaSyC9hya7EGpzu9Qn-bcjcwVpgy-_K7NR47A",
