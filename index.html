@@ -130,6 +130,59 @@
     /* Upload UI */
     .upload-box { background:#f6f9fc; height:200px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#cbd5e0; border:2px dashed #e2e8f0; position:relative; overflow:hidden; }
     .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
+
+    .loading-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,0.8);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-weight:700;
+  color:#377CFF;
+}
+
+.spinner{
+  width:40px;
+  height:40px;
+  border:4px solid #eee;
+  border-top:4px solid #377CFF;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin-bottom:10px;
+}
+
+@keyframes spin{
+  to{ transform:rotate(360deg); }
+}
+.loading-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(255,255,255,0.8);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  font-weight:700;
+  color:#377CFF;
+}
+
+.spinner{
+  width:40px;
+  height:40px;
+  border:4px solid #eee;
+  border-top:4px solid #377CFF;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin-bottom:10px;
+}
+
+@keyframes spin{
+  to{ transform:rotate(360deg); }
+}
+
+
   </style>
 </head>
 <body>
@@ -472,8 +525,29 @@
         mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
         Object.keys(grouped).sort().reverse().forEach(date => {
              let html = `<div class="meal-day"><h4>${date}</h4>`;
-             grouped[date].forEach(i => html += `<div class="meal-row"><div>${i.name}</div><div>${i.calories} kcal</div></div>`);
-             container.innerHTML += html + '</div>';
+             grouped[date].forEach(i => {
+
+ let value = i.calories;
+ let unit = "kcal";
+
+ if(activeMealMetric === "protein"){
+   value = i.protein;
+   unit = "g";
+ }
+
+ if(activeMealMetric === "carbs"){
+   value = i.carbs;
+   unit = "g";
+ }
+
+ html += `
+   <div class="meal-row">
+     <div>${i.name}</div>
+     <div>${value} ${unit}</div>
+   </div>
+ `;
+});
+
         });
     }
 
@@ -558,7 +632,13 @@ Simpan ke diari?`)) {
   }
 };
 
-    window.resetUpload = () => showScreen('home');
+   window.resetUpload = () => {
+ document.getElementById("uploadPreview").classList.add("hidden");
+ document.getElementById("uploadPreview").src = "";
+ showScreen('home');
+};
+
+
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
