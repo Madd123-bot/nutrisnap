@@ -346,7 +346,7 @@
     // --- 2. GLOBAL STATE ---
     let currentUser = null, mealLogs = [], weightLogs = [];
     let activeMealMetric = 'calories';
-    const API_KEY = ""; 
+    const API_KEY = "36e194aa6e229b5dd49edbf2a7add2f00a792a21"; 
 
     // --- 3. LOGIN SUCCESS HANDLER ---
     window.handleLoginSuccess = (user) => {
@@ -484,16 +484,80 @@
     };
     window.triggerCamera = () => document.getElementById('cameraInput').click();
     window.triggerGallery = () => document.getElementById('galleryInput').click();
-    window.handleImageUpload = (input) => { 
-        setTimeout(() => {
-            if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
-                const data = { name: "Nasi Lemak", calories: 450, protein: 12, carbs: 60, date: getTodayDate() };
-                if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-                else { mealLogs.push(data); localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); renderHomeStats(); }
-                showScreen('home');
-            }
-        }, 500);
-    };
+    window.handleImageUpload = async (input) => {
+
+  const file = input.files[0];
+  if(!file) return;
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById("uploadPreview").src = reader.result;
+    document.getElementById("uploadPreview").classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+
+  // Show loading
+  document.getElementById("aiLoading").classList.remove("hidden");
+
+  // Upload to AI
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    const res = await fetch("https://api.logmeal.es/v2/image/recognition/complete", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + API_KEY
+      },
+      body: formData
+    });
+
+    const aiData = await res.json();
+
+    document.getElementById("aiLoading").classList.add("hidden");
+
+    // Get best result
+    const foodName = aiData.recognition_results[0].name;
+
+    const nutrition = aiData.nutritional_info;
+
+    const calories = Math.round(nutrition.calories);
+    const protein = Math.round(nutrition.protein);
+    const carbs = Math.round(nutrition.carbs);
+
+    if(confirm(`AI Detect: ${foodName}
+Calories: ${calories} kcal
+Protein: ${protein} g
+Carbs: ${carbs} g
+
+Simpan ke diari?`)) {
+
+      const data = {
+        name: foodName,
+        calories,
+        protein,
+        carbs,
+        date: getTodayDate()
+      };
+
+      if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
+        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+      } else {
+        mealLogs.push(data);
+        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
+      }
+
+      showScreen('home');
+    }
+
+  } catch(err) {
+    console.error(err);
+    alert("AI gagal analisis. Cuba lagi.");
+    document.getElementById("aiLoading").classList.add("hidden");
+  }
+};
+
     window.resetUpload = () => showScreen('home');
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
@@ -733,4 +797,4 @@
   </script>
 </body>
 </html>
-
+s
