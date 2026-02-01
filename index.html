@@ -480,16 +480,26 @@ function saveWeightLog(data){
 
     // Auto-Login Check (Local)
     window.addEventListener('load', () => {
-        if(localStorage.getItem('isLoggedIn') === 'true') {
-            const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            window.handleLoginSuccess(u);
-        }
-    });
+
+  try{
+    if(localStorage.getItem('isLoggedIn') === 'true') {
+      const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      if(u && u.uid) window.handleLoginSuccess(u);
+    }
+  }catch(e){
+    console.warn("Auto login skipped");
+  }
+
+});
+
 
     // --- 4. DATA LOGIC ---
     function renderHomeStats() {
         const today = getTodayDate();
-        const logs = mealLogs.filter(l => l.date === today);
+        const logs = Array.isArray(mealLogs) 
+  ? mealLogs.filter(l => l.date === today)
+  : [];
+
         const sum = (k) => logs.reduce((a, b) => a + (b[k]||0), 0);
         document.getElementById('calBalance').innerText = sum('calories');
         document.getElementById('protBalance').innerText = sum('protein');
@@ -880,19 +890,29 @@ Simpan ke diari?`)) {
 
   <!-- BRIDGE -->
   <script>
-    window.updateDataBridge = (type, data) => {
-        if(type === 'meals') {
-            mealLogs = data;
-            renderHomeStats();
-            if(document.getElementById('analysis').classList.contains('active')) renderMeals();
-        }
-        if(type === 'weights') {
-            weightLogs = data;
-            if(document.getElementById('weight').classList.contains('active')) renderWeightLogs();
-        }
+   window.updateDataBridge = (type, data) => {
+
+  if(!Array.isArray(data)) data = [];
+
+  if(type === 'meals') {
+    mealLogs = data;
+    renderHomeStats();
+    if(document.getElementById('analysis').classList.contains('active')){
+      renderMeals();
     }
+  }
+
+  if(type === 'weights') {
+    weightLogs = data;
+    if(document.getElementById('weight').classList.contains('active')){
+      renderWeightLogs();
+    }
+  }
+};
+
   </script>
 </body>
 </html>
 s
+
 
