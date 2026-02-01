@@ -379,6 +379,32 @@
 
   <!-- SINGLE LOGIC SCRIPT -->
   <script>
+    // ---- STORAGE HELPERS ----
+
+function isOfflineUser(){
+  return currentUser && currentUser.uid.startsWith('offline_');
+}
+
+function saveMeal(data){
+  if(window.isFirebaseReady && !isOfflineUser()){
+    window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+  } else {
+    mealLogs.push(data);
+    localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
+    renderHomeStats();
+  }
+}
+
+function saveWeightLog(data){
+  if(window.isFirebaseReady && !isOfflineUser()){
+    window.fs.addDoc(window.getCollection(currentUser.uid,'weights'), data);
+  } else {
+    weightLogs.push(data);
+    localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
+    renderWeightLogs();
+  }
+}
+
     // --- 1. UI HELPERS ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
@@ -615,12 +641,8 @@ Simpan ke diari?`)) {
         date: getTodayDate()
       };
 
-      if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
-        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-      } else {
-        mealLogs.push(data);
-        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-      }
+      saveMeal(data);
+
 
       showScreen('home');
     }
@@ -650,13 +672,8 @@ Simpan ke diari?`)) {
         if (!w) return alert("Isi berat.");
         const data = { weight: parseFloat(w), date: document.getElementById('inpDate').value };
         
-        if (currentUser.uid.startsWith('offline_')) {
-            weightLogs.push(data);
-            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
-            renderWeightLogs();
-        } else if (window.fs) {
-            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), data);
-        }
+        saveWeightLog(data);
+
         document.getElementById('inpWeight').value = '';
         alert("Disimpan!");
     }
@@ -878,3 +895,4 @@ Simpan ke diari?`)) {
 </body>
 </html>
 s
+
