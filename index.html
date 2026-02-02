@@ -614,13 +614,11 @@ function saveWeightLog(data){
 
   try {
 
-    const res = await fetch("https://api.logmeal.es/v2/image/recognition/complete", {
-      method: "POST",
-      headers: {
-        "Authorization": "Bearer " + API_KEY
-      },
-      body: formData
-    });
+    const res = await fetch("/analyze", {
+  method:"POST",
+  body: formData
+});
+
 
     const ai = await res.json();
 
@@ -979,6 +977,7 @@ Simpan ke diari?`)) {
 </body>
 </html>
 s
+
 
 
 
