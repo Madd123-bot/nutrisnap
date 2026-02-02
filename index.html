@@ -386,24 +386,13 @@ function isOfflineUser(){
 }
 
 function saveMeal(data){
-  if(window.isFirebaseReady && !isOfflineUser()){
-    window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-  } else {
-    mealLogs.push(data);
-    localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-    renderHomeStats();
-  }
+  addDoc(collection(db, "users", currentUser.uid, "meals"), data);
 }
 
 function saveWeightLog(data){
-  if(window.isFirebaseReady && !isOfflineUser()){
-    window.fs.addDoc(window.getCollection(currentUser.uid,'weights'), data);
-  } else {
-    weightLogs.push(data);
-    localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
-    renderWeightLogs();
-  }
+  addDoc(collection(db, "users", currentUser.uid, "weights"), data);
 }
+
 
     // --- 1. UI HELPERS ---
     function showScreen(id) {
@@ -749,199 +738,147 @@ Simpan ke diari?`)) {
 
   <!-- FIREBASE MODULE (Runs Last) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+   <script type="module">
 
-    // --- KEYS ANDA ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyD8C8zLjzcRz4Vxz7HT9NtQN4gxV3Ct0nE",
-      authDomain: "nutrisnap-34c6b.firebaseapp.com",
-      projectId: "nutrisnap-34c6b",
-      storageBucket: "nutrisnap-34c6b.firebasestorage.app",
-      messagingSenderId: "427310632230",
-      appId: "1:427310632230:web:78e2943728aec2987ac5e7"
-    };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    let app, auth, db;
-    let isFirebaseReady = false;
+import { 
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  limit
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- INIT FIREBASE ---
-    try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        window.isFirebaseReady = true;
-        console.log("Firebase Connected");
 
-        // LISTENER UTAMA
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.handleLoginSuccess(user);
-            } else {
-                const offline = localStorage.getItem('isLoggedIn') === 'true';
-                if (!offline) window.handleLogoutSuccess();
-            }
-        });
+// 🔑 Firebase config (yours)
+const firebaseConfig = {
+  apiKey: "AIzaSyD8C8zLjzcRz4Vxz7HT9NtQN4gxV3Ct0nE",
+  authDomain: "nutrisnap-34c6b.firebaseapp.com",
+  projectId: "nutrisnap-34c6b",
+  storageBucket: "nutrisnap-34c6b.firebasestorage.app",
+  messagingSenderId: "427310632230",
+  appId: "1:427310632230:web:78e2943728aec2987ac5e7"
+};
 
-    } catch (e) {
-        console.error("Firebase Init Failed:", e);
-    }
+// INIT
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    // --- EXPORTS TO WINDOW ---
-    window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
-    window.fs = { query, orderBy, limit, onSnapshot, addDoc };
-    
-    // --- DATA SUBSCRIPTION ---
-    window.subscribeToData = (uid) => {
-        if (!window.isFirebaseReady) return;
-        
-        const mealsRef = collection(db, 'users', uid, 'meals');
-        const qMeals = query(mealsRef, orderBy('date', 'desc'), limit(50));
-        window.unsubscribeMeals = onSnapshot(qMeals, (snap) => {
-            const data = []; snap.forEach(d => data.push(d.data()));
-            if(window.updateDataBridge) window.updateDataBridge('meals', data);
-        });
+// expose db helpers
+window.db = db;
+window.addDoc = addDoc;
+window.collection = collection;
+window.query = query;
+window.orderBy = orderBy;
+window.onSnapshot = onSnapshot;
+window.limit = limit;
 
-        const wRef = collection(db, 'users', uid, 'weights');
-        const qWeight = query(wRef, orderBy('date', 'desc'), limit(20));
-        window.unsubscribeWeight = onSnapshot(qWeight, (snap) => {
-            const data = []; snap.forEach(d => data.push(d.data()));
-            if(window.updateDataBridge) window.updateDataBridge('weights', data);
-        });
-    }
 
-    // --- LOGIN HANDLERS ---
-    window.handleGoogleLogin = async () => {
-        const btn = document.getElementById('googleBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi Google...";
-        stat.innerText = "Sila tunggu pop-up...";
+// 🔁 AUTH STATE LISTENER
+onAuthStateChanged(auth, user => {
 
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new GoogleAuthProvider());
-            
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-            
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Google'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.innerText = "Masuk dengan Google";
-                btn.disabled = false;
-                stat.innerText = "";
-            }
-        }
-    };
+  if(user){
+    currentUser = user;
+    document.getElementById("profileName").innerText = user.displayName || "User";
+    document.getElementById("profileEmail").innerText = user.email;
+    showScreen("home");
+    subscribeToData(user.uid);
+  }else{
+    currentUser = null;
+    showScreen("login");
+  }
 
-    window.handleFacebookLogin = async () => {
-        const btn = document.getElementById('fbBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi FB...";
-        stat.innerText = "Sila tunggu pop-up...";
-        
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new FacebookAuthProvider());
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Masuk dengan Facebook";
-                stat.innerText = "";
-            }
-        }
-    };
+});
 
-    window.handleEmailLogin = async () => { 
-        const email = document.getElementById('loginEmail').value;
-        const pass = document.getElementById('loginPass').value;
-        if(!email || !pass) return alert("Sila isi info");
-        
-        try {
-            const res = await signInWithEmailAndPassword(auth, email, pass);
-            window.handleLoginSuccess(res.user);
-        } catch(error) {
-             // Fallback
-            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
-            const u = users.find(x => x.email === email && x.pass === pass);
-            if(u) {
-                localStorage.setItem('currentUser', JSON.stringify(u));
-                localStorage.setItem('isLoggedIn', 'true');
-                window.handleLoginSuccess(u);
-            } else {
-                alert("Gagal: " + error.message);
-            }
-        }
-    };
 
-    // UPDATED SIGNUP HANDLER FOR NEW FIELDS
-    window.handleEmailSignup = async () => {
-        const name = document.getElementById('signupName').value;
-        const username = document.getElementById('signupUsername').value;
-        const email = document.getElementById('signupEmail').value;
-        const job = document.getElementById('signupJob').value;
-        const age = document.getElementById('signupAge').value;
-        const weight = document.getElementById('signupWeight').value;
-        const goal = document.getElementById('signupGoal').value;
-        const pass = document.getElementById('signupPass').value;
+// 👉 GOOGLE LOGIN
+window.handleGoogleLogin = async () => {
+  await signInWithPopup(auth, new GoogleAuthProvider());
+};
 
-        if(!name || !email || !pass) return alert("Sila isi info wajib.");
-        
-        try {
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(res.user, { displayName: name });
-            
-            // Save extra data to Firestore
-            if (window.isFirebaseReady) {
-                await setDoc(doc(db, "users", res.user.uid), {
-                    username, job, age, weight, goal, 
-                    email: email, 
-                    createdAt: new Date()
-                });
-                
-                // Add initial weight log
-                if (weight) {
-                    await addDoc(collection(db, "users", res.user.uid, "weights"), {
-                        weight: parseFloat(weight),
-                        date: new Date().toISOString().split('T')[0]
-                    });
-                }
-            }
-            
-            // Save goal locally to skip onboarding
-            if (goal) localStorage.setItem('userGoal', goal);
 
-            window.handleLoginSuccess(res.user);
-            
-        } catch(error) {
-            // Fallback
-            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
-            users.push({uid: "sim_"+Date.now(), displayName: name, email, pass});
-            localStorage.setItem('simUsers', JSON.stringify(users));
-            alert("Didaftarkan secara Offline (Firebase Gagal). Sila Login.");
-            showScreen('emailLogin');
-        }
-    };
-    
-    window.handleLogout = async () => {
-        if (window.isFirebaseReady) await signOut(auth).catch(()=>{});
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('currentUser');
-        window.location.reload();
+// 👉 EMAIL LOGIN
+window.handleEmailLogin = async () => {
+
+  const email = loginEmail.value;
+  const pass = loginPass.value;
+
+  if(!email || !pass) return alert("Isi semua");
+
+  await signInWithEmailAndPassword(auth, email, pass);
+};
+
+
+// 👉 SIGNUP
+window.handleEmailSignup = async () => {
+
+  const name = signupName.value;
+  const email = signupEmail.value;
+  const pass = signupPass.value;
+
+  if(!name || !email || !pass) return alert("Isi semua");
+
+  const res = await createUserWithEmailAndPassword(auth, email, pass);
+  await updateProfile(res.user, { displayName: name });
+
+};
+
+
+// 👉 LOGOUT
+window.handleLogout = async () => {
+  await signOut(auth);
+};
+
+
+// 📡 DATA SYNC
+function subscribeToData(uid){
+
+  const mealsRef = collection(db, "users", uid, "meals");
+
+  const qMeals = query(mealsRef, orderBy("date","desc"), limit(50));
+
+  onSnapshot(qMeals, snap => {
+
+    const data = [];
+    snap.forEach(d => data.push(d.data()));
+
+    mealLogs = data;
+    renderHomeStats();
+    renderMeals();
+  });
+
+
+  const weightRef = collection(db,"users",uid,"weights");
+
+  const qWeight = query(weightRef, orderBy("date","desc"), limit(20));
+
+  onSnapshot(qWeight, snap => {
+
+    const data = [];
+    snap.forEach(d => data.push(d.data()));
+
+    weightLogs = data;
+    renderWeightLogs();
+  });
+
+
+
+</script>
+
     };
   </script>
 
@@ -971,6 +908,7 @@ Simpan ke diari?`)) {
 </body>
 </html>
 s
+
 
 
 
