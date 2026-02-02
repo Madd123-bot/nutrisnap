@@ -599,12 +599,77 @@ function saveWeightLog(data){
   const file = input.files[0];
   if(!file) return;
 
-  // Show preview
+  // Preview image
   const reader = new FileReader();
   reader.onload = () => {
     document.getElementById("uploadPreview").src = reader.result;
     document.getElementById("uploadPreview").classList.remove("hidden");
   };
+  reader.readAsDataURL(file);
+
+  document.getElementById("aiLoading").classList.remove("hidden");
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+
+    const res = await fetch("https://api.logmeal.es/v2/image/recognition/complete", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + API_KEY
+      },
+      body: formData
+    });
+
+    const ai = await res.json();
+
+    document.getElementById("aiLoading").classList.add("hidden");
+
+    if(!ai.recognition_results || !ai.recognition_results.length){
+      alert("AI tak dapat kenal makanan. Cuba gambar lebih jelas.");
+      return;
+    }
+
+    const foodName = ai.recognition_results[0].name;
+
+    const nutrition = ai.nutritional_info || {};
+
+    const calories = Math.round(nutrition.calories || 0);
+    const protein  = Math.round(nutrition.protein || 0);
+    const carbs    = Math.round(nutrition.carbs || 0);
+
+    const confirmSave = confirm(
+      `AI Detect: ${foodName}
+
+Calories: ${calories} kcal
+Protein: ${protein} g
+Carbs: ${carbs} g
+
+Simpan ke diari?`
+    );
+
+    if(confirmSave){
+
+      const data = {
+        name: foodName,
+        calories,
+        protein,
+        carbs,
+        date: getTodayDate()
+      };
+
+      saveMeal(data);
+      showScreen('home');
+    }
+
+  } catch (err){
+    console.error(err);
+    alert("AI error. Sila cuba lagi.");
+    document.getElementById("aiLoading").classList.add("hidden");
+  }
+};
+
   reader.readAsDataURL(file);
 
   // Show loading
@@ -914,5 +979,6 @@ Simpan ke diari?`)) {
 </body>
 </html>
 s
+
 
 
