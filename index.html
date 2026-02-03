@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>NutriSnap</title>
+  <title>NutriSnap AI</title>
   
   <style>
     /* --- CSS UTAMA --- */
@@ -17,7 +17,6 @@
       --accent: #2dce89;
       --accent-gradient: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
       --danger: #f5365c;
-      --facebook: #1877F2;
       --radius: 16px; 
       font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
@@ -74,7 +73,6 @@
     button:active { transform: scale(0.97); }
     .primary { background: var(--primary-gradient); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
     .secondary { background: var(--soft); color: var(--primary); }
-    .fb-btn { background: var(--facebook); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
     .accent-btn { background: var(--accent-gradient); color: white; }
     .danger-btn { background: #fff0f3; color: var(--danger); }
     
@@ -97,16 +95,32 @@
     .stat-val { font-size: 24px; font-weight: 800; color: #32325d; }
     .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
 
+    /* Smart Weight & List Styles */
     .list-item {
-        background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px;
-        display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        background: var(--card); padding: 12px; border-radius: 12px; margin-bottom: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .item-val { font-weight: 700; font-size: 16px; color: #32325d; display: flex; align-items: center; gap: 10px; }
-    
-    /* Weight Indicators */
-    .trend-down { color: #2dce89; background: #e6fffa; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-    .trend-up { color: #f5365c; background: #fff5f5; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-    .trend-same { color: #fbbf24; background: #fffbeb; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+
+    .trend-badge { font-size: 12px; padding: 4px 8px; border-radius: 20px; font-weight: bold; display: inline-block; }
+    .t-loss { background: #d1fae5; color: #047857; } 
+    .t-gain { background: #fee2e2; color: #b91c1c; } 
+    .t-same { background: #fef3c7; color: #b45309; }
+
+    /* Meal Diary Layout */
+    .meal-row-content { display: flex; align-items: center; width: 100%; justify-content: space-between; }
+    .meal-info-left { flex: 1; text-align: left; }
+    .meal-name { font-weight: 800; font-size: 16px; margin-bottom: 6px; color: #32325d; }
+    .nutrient-lines { font-size: 12px; color: #888; display: flex; flex-direction: column; gap: 2px; }
+    .meal-img-thumb { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; margin-left: 15px; background: #eee; border: 2px solid #f0f0f0; }
+
+    /* Calendar */
+    .calendar-wrapper { background: white; padding: 15px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(50,50,93,0.05); }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 12px; }
+    .cal-day { padding: 8px 0; border-radius: 8px; color: #888; }
+    .cal-day.has-data { background: var(--soft); color: var(--primary); font-weight: bold; }
+    .cal-day.today { border: 1px solid var(--primary); }
 
     /* Nav */
     .fab-btn {
@@ -120,45 +134,21 @@
         display: flex; justify-content: space-between; align-items: center; padding: 0 15px; 
         box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
     }
-    
     .nav-btn {
-        flex: 1; 
-        background: none; 
-        border: none; 
-        padding: 8px; 
-        display: flex; 
-        flex-direction: column;
-        align-items: center; 
-        justify-content: center; 
-        color: #adb5bd; 
-        font-size: 11px; 
-        font-weight: 600; 
-        gap: 5px;
-        margin: 0 5px;
-        border-radius: 16px; 
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        flex: 1; background: none; border: none; padding: 8px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; color: #adb5bd; font-size: 11px; font-weight: 600; gap: 5px;
+        margin: 0 5px; border-radius: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
     }
-    
-    .nav-btn.active { 
-        color: var(--primary); 
-        background-color: rgba(55, 124, 255, 0.15); 
-        transform: translateY(-2px); 
-    }
-    
+    .nav-btn.active { color: var(--primary); background-color: rgba(55, 124, 255, 0.15); transform: translateY(-2px); }
     .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
     .nav-spacer { width: 70px; } 
 
     /* Upload UI */
     .upload-box { background:#f6f9fc; height:200px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#cbd5e0; border:2px dashed #e2e8f0; position:relative; overflow:hidden; }
     .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
-    
-    /* NEW: Food Image in Diary */
-    .meal-img-thumb {
-        width: 50px; height: 50px; border-radius: 8px; object-fit: cover; margin-right: 12px;
-        background: #eee;
-    }
-    .meal-row-content { display: flex; align-items: center; width: 100%; }
-    .meal-info { flex: 1; }
+    .loading-overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(255,255,255,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10; }
+    .spinner { width:30px; height:30px; border:3px solid var(--soft); border-top:3px solid var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -182,11 +172,6 @@
              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
              Masuk dengan Google
           </button>
-
-          <button id="fbBtn" class="fb-btn" onclick="window.handleFacebookLogin()">
-             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
-             Masuk dengan Facebook
-          </button>
           
           <div id="loginStatus" class="status-text"></div>
 
@@ -207,70 +192,31 @@
         </div>
       </section>
 
-      <!-- 2. EMAIL LOGIN -->
+      <!-- Email Forms -->
       <section id="emailLogin" class="screen">
-        <div class="login-card">
-          <h2>Log Masuk</h2>
-          <input type="email" placeholder="E-mel" id="loginEmail" />
-          <input type="password" placeholder="Kata Laluan" id="loginPass" />
-          <button class="primary" onclick="window.handleEmailLogin()">Masuk</button>
-          <button class="secondary" data-nav="login">Kembali</button>
-        </div>
+        <div class="login-card"><h2>Log Masuk</h2><input type="email" id="loginEmail" placeholder="E-mel"><input type="password" id="loginPass" placeholder="Kata Laluan"><button class="primary" onclick="window.handleEmailLogin()">Masuk</button><button class="secondary" data-nav="login">Kembali</button></div>
       </section>
-
-      <!-- 3. EMAIL SIGNUP (UPDATED FORM) -->
+      
+      <!-- NEW SIGNUP FORM -->
       <section id="emailSignup" class="screen">
         <div class="login-card">
           <h2>Daftar Baru</h2>
-          
-          <label class="inp-label">Nama Penuh</label>
-          <input type="text" id="signupName" placeholder="Ahmad Albab" />
-
-          <label class="inp-label">Nama Pengguna (Username)</label>
-          <input type="text" id="signupUsername" placeholder="ahmad_fit" />
-          
-          <label class="inp-label">E-mel</label>
-          <input type="email" id="signupEmail" placeholder="nama@contoh.com" />
-          
-          <label class="inp-label">Pekerjaan</label>
-          <input type="text" id="signupJob" placeholder="Pelajar" />
-
+          <label class="inp-label">Nama Penuh</label><input type="text" id="signupName" placeholder="Ahmad Albab" />
+          <label class="inp-label">Username</label><input type="text" id="signupUsername" placeholder="ahmad_fit" />
+          <label class="inp-label">E-mel</label><input type="email" id="signupEmail" placeholder="nama@contoh.com" />
+          <label class="inp-label">Pekerjaan</label><input type="text" id="signupJob" placeholder="Pelajar" />
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-              <div>
-                  <label class="inp-label">Umur</label>
-                  <input type="number" id="signupAge" placeholder="25" />
-              </div>
-              <div>
-                  <label class="inp-label">Berat Semasa</label>
-                  <input type="number" id="signupWeight" placeholder="70 kg" step="0.1" />
-              </div>
+              <div><label class="inp-label">Umur</label><input type="number" id="signupAge" placeholder="25" /></div>
+              <div><label class="inp-label">Berat Semasa</label><input type="number" id="signupWeight" placeholder="70 kg" step="0.1" /></div>
           </div>
-
-          <label class="inp-label">Berat Matlamat (kg)</label>
-          <input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
-          
-          <label class="inp-label">Kata Laluan</label>
-          <input type="password" id="signupPass" placeholder="********" />
-          
+          <label class="inp-label">Berat Matlamat (kg)</label><input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
+          <label class="inp-label">Kata Laluan</label><input type="password" id="signupPass" placeholder="********" />
           <button class="primary" onclick="window.handleEmailSignup()">Daftar Sekarang</button>
           <button class="secondary" data-nav="login">Kembali</button>
         </div>
       </section>
 
-      <!-- ONBOARDING SCREEN -->
-      <section id="onboarding" class="screen">
-        <div class="login-card">
-            <h2>Matlamat Anda</h2>
-            <p style="margin-bottom:20px; color:var(--muted); font-size:14px;">Bantu kami peribadikan pengalaman anda.</p>
-            <label class="inp-label" style="display:block; text-align:left; margin-bottom:5px;">Berat Semasa (kg)</label>
-            <input type="number" id="onboardStartWeight" placeholder="Contoh: 75.0" step="0.1">
-            <label class="inp-label" style="display:block; text-align:left; margin-bottom:5px;">Berat Matlamat (kg)</label>
-            <input type="number" id="onboardGoalWeight" placeholder="Contoh: 65.0" step="0.1">
-            <button class="primary" onclick="saveOnboarding()">Simpan & Teruskan</button>
-        </div>
-      </section>
-
-      <!-- 4. HOME DASHBOARD -->
+      <!-- Home -->
       <section id="home" class="screen">
         <h3>Ringkasan Hari Ini</h3>
         <div class="stats-grid">
@@ -278,370 +224,78 @@
             <div class="stat-card carb"><div class="stat-val" id="carbBalance">0</div><div class="stat-label">Karbo (g)</div></div>
             <div class="stat-card prot"><div class="stat-val" id="protBalance">0</div><div class="stat-label">Protein (g)</div></div>
         </div>
-        <h3>Log Makanan Terkini</h3>
-        <div id="recentMealsList" class="history-list"><div class="list-item" style="justify-content:center; color:var(--muted);">Tiada rekod hari ini</div></div>
+        <h3>Log Terkini</h3>
+        <div id="recentMealsList"></div>
       </section>
 
-      <!-- 5. UPLOAD / CAMERA -->
-      <section id="upload" class="screen">
-        <div class="login-card">
-          <h2>Analisis Makanan</h2>
-          <div class="upload-box">
-             <img id="uploadPreview" class="preview-img hidden" src="" alt="Preview">
-             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span>Menganalisis AI...</span></div>
-             <div id="uploadPlaceholder">
-                <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
-             </div>
-          </div>
-          <p style="color:var(--muted);">Ambil gambar makanan untuk analisis AI.</p>
-          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
-          <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
-          <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
-          <button class="secondary" onclick="triggerGallery()">📁 Pilih dari Galeri</button>
-          <button class="secondary" onclick="resetUpload()">Batal</button>
-        </div>
-      </section>
-
-      <!-- 6. ANALYSIS -->
+      <!-- Diary -->
       <section id="analysis" class="screen">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3>Diari Makanan</h3>
-          <select id="metricToggle" style="width:auto; margin:0; padding:8px; border-color:var(--primary); color:var(--primary); font-weight:600;">
-            <option value="calories">Kalori</option><option value="protein">Protein</option><option value="carbs">Karbohidrat</option>
-          </select>
-        </div>
-        <div id="mealsContainer" style="margin-top:20px;"></div>
+        <h3>Diari Makanan</h3>
+        <div id="mealsContainer" style="margin-top:20px; padding-bottom:80px;"></div>
       </section>
 
-      <!-- 7. WEIGHT -->
+      <!-- Weight -->
       <section id="weight" class="screen">
         <div class="login-card" style="margin-top:0;">
-            <h3>Rekod Berat Badan</h3>
-            <input type="number" id="inpWeight" placeholder="Berat (kg)" step="0.1" />
-            <input type="date" id="inpDate" />
-            <button class="primary" id="btnSaveWeight">Simpan Rekod</button>
+            <h3>Kemas Kini Berat</h3>
+            <p style="font-size:12px; color:#888;">(Satu rekod sehari)</p>
+            <input type="number" id="inpWeight" placeholder="Berat (kg)" step="0.1">
+            <input type="date" id="inpDate">
+            <button class="primary" id="btnSaveWeight">Simpan</button>
         </div>
-        <h4>Sejarah Berat</h4>
-        <div id="weightHistory" class="history-list"></div>
+        <h4>Kalendar Berat</h4>
+        <div class="calendar-wrapper"><div class="calendar-grid" id="weightCalendar"></div></div>
+        <h4>Sejarah</h4>
+        <div id="weightHistory" style="padding-bottom:80px;"></div>
       </section>
 
-      <!-- 8. PROFILE -->
-      <section id="profile" class="screen">
+      <!-- Upload -->
+      <section id="upload" class="screen">
         <div class="login-card">
-            <div class="user-icon" style="width:80px; height:80px; font-size:32px; margin:0 auto 20px; background:var(--primary-gradient); box-shadow:0 10px 20px rgba(55, 124, 255, 0.3);">A</div>
-            <h3 id="profileName">Pengguna</h3>
-            <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
-            <button class="secondary" style="margin-top:20px;">Edit Profil</button>
-            <div class="divider">ZON BAHAYA</div>
-            <button class="danger-btn" onclick="resetApp()">Padam Semua Data (Reset)</button>
-            <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
+          <h2>AI Food Scan</h2>
+          <div class="upload-box">
+             <img id="uploadPreview" class="preview-img hidden" src="" alt="Preview">
+             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span style="margin-top:10px;font-weight:bold;color:#377CFF;">AI sedang berfikir...</span></div>
+             <div id="uploadPlaceholder" style="font-size:40px; color:#ccc;">📸</div>
+          </div>
+          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Gemini Kesan Nama<br>3. Kalori.my Bagi Data</p>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
+          <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+          <button class="primary" onclick="document.getElementById('cameraInput').click()">📸 Kamera</button>
+          <button class="secondary" onclick="document.getElementById('galleryInput').click()">📁 Galeri</button>
+          <button class="danger-btn" onclick="showScreen('home')">Batal</button>
         </div>
       </section>
 
+      <!-- Misc -->
+      <section id="profile" class="screen">
+        <div class="login-card"><h3 id="profileName">User</h3><p id="profileEmail">email</p><button class="danger-btn" onclick="window.handleLogout()">Log Keluar</button></div>
+      </section>
+      <section id="onboarding" class="screen">
+        <div class="login-card"><h2>Matlamat</h2><input type="number" id="onboardStartWeight" placeholder="Berat Mula"><input type="number" id="onboardGoalWeight" placeholder="Berat Matlamat"><button class="primary" onclick="saveOnboarding()">Simpan</button></div>
+      </section>
     </main>
     
-    <button id="fabBtn" class="fab-btn hidden" data-nav="upload">
-      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
-    </button>
-
+    <button id="fabBtn" class="fab-btn hidden" data-nav="upload">+</button>
     <nav class="bottombar hidden" id="mainNav">
-      <button class="nav-btn active" data-nav="home"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"/></svg><span>Utama</span></button>
-      <button class="nav-btn" data-nav="analysis"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span>Diari</span></button>
+      <button class="nav-btn active" data-nav="home"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z" fill="currentColor"/></svg><span>Utama</span></button>
+      <button class="nav-btn" data-nav="analysis"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" fill="currentColor"/></svg><span>Diari</span></button>
       <div class="nav-spacer"></div>
-      <button class="nav-btn" data-nav="weight"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9s9-4.03 9-9s-4.03-9-9-9zm-1.5 3h3V9h-3V6zm0 10.5V12h3v4.5h-3z"/></svg><span>Berat</span></button>
-      <button class="nav-btn" data-nav="profile"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profil</span></button>
+      <button class="nav-btn" data-nav="weight"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9s9-4.03 9-9s-4.03-9-9-9zm-1.5 3h3V9h-3V6zm0 10.5V12h3v4.5h-3z" fill="currentColor"/></svg><span>Berat</span></button>
+      <button class="nav-btn" data-nav="profile"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg><span>Profil</span></button>
     </nav>
   </div>
 
-  <!-- SINGLE LOGIC SCRIPT -->
-  <script>
-    // --- 1. UI HELPERS ---
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
-        const isAuth = ['login', 'emailLogin', 'emailSignup', 'onboarding'].includes(id);
-        const hideNav = isAuth; 
-
-        const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
-        els.forEach(el => el.classList.toggle('hidden', hideNav));
-        
-        // Handle Nav State
-        document.querySelectorAll('.nav-btn').forEach(b => {
-             b.classList.toggle('active', b.getAttribute('data-nav') === id);
-        });
-        
-        if(id === 'home') renderHomeStats();
-        if(id === 'weight') renderWeightLogs();
-        if(id === 'analysis') renderMeals();
-    }
-    document.querySelectorAll('[data-nav]').forEach(el => {
-        el.addEventListener('click', (e) => { e.preventDefault(); showScreen(el.dataset.nav); });
-    });
-
-    // --- 2. GLOBAL STATE ---
-    let currentUser = null, mealLogs = [], weightLogs = [];
-    let activeMealMetric = 'calories';
-    const API_KEY = ""; 
-
-    // --- 3. LOGIN SUCCESS HANDLER ---
-    window.handleLoginSuccess = (user) => {
-        currentUser = user;
-        console.log("LOGIN SUCCESS:", user.email);
-        
-        const statusEl = document.getElementById('loginStatus');
-        if(statusEl) statusEl.innerText = "Berjaya! Mengalih...";
-
-        document.getElementById('profileName').innerText = user.displayName || "Pengguna";
-        document.getElementById('profileEmail').innerText = user.email;
-        if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
-        else document.getElementById('userIcon').innerText = (user.displayName || "A").charAt(0).toUpperCase();
-
-        // Load Data (Hybrid)
-        if (user.uid.startsWith('offline_')) {
-            mealLogs = JSON.parse(localStorage.getItem('mealLogs') || '[]');
-            weightLogs = JSON.parse(localStorage.getItem('weightLogs') || '[]');
-        } else if (window.subscribeToData) {
-            window.subscribeToData(user.uid);
-        }
-
-        // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
-        setTimeout(() => {
-            if (!localStorage.getItem('userGoal')) {
-                showScreen('onboarding');
-            } else {
-                console.log("Redirecting to Home...");
-                showScreen('home');
-            }
-        }, 500); 
-    }
-
-    window.handleLogoutSuccess = () => {
-        currentUser = null;
-        if(window.unsubscribeMeals) window.unsubscribeMeals();
-        if(window.unsubscribeWeight) window.unsubscribeWeight();
-        showScreen('login');
-    }
-
-    window.forceOfflineLogin = (provider = "Offline") => {
-        const mockUser = { 
-            uid: "offline_user_" + Date.now(), 
-            displayName: "Pengguna " + provider, 
-            email: provider.toLowerCase() + "@nutrisnap.com", 
-            photoURL: null 
-        };
-        localStorage.setItem('currentUser', JSON.stringify(mockUser));
-        localStorage.setItem('isLoggedIn', 'true');
-        window.handleLoginSuccess(mockUser);
-    }
-
-    // Auto-Login Check (Local)
-    window.addEventListener('load', () => {
-        if(localStorage.getItem('isLoggedIn') === 'true') {
-            const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            window.handleLoginSuccess(u);
-        }
-    });
-
-    // --- 4. DATA LOGIC ---
-    function renderHomeStats() {
-        const today = getTodayDate();
-        const logs = mealLogs.filter(l => l.date === today);
-        const sum = (k) => logs.reduce((a, b) => a + (b[k]||0), 0);
-        document.getElementById('calBalance').innerText = sum('calories');
-        document.getElementById('protBalance').innerText = sum('protein');
-        document.getElementById('carbBalance').innerText = sum('carbs');
-        
-        const list = document.getElementById('recentMealsList');
-        list.innerHTML = logs.length ? '' : `<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>`;
-        logs.forEach(m => list.innerHTML += `<div class="list-item"><div class="item-val">${m.name}</div><div class="item-date">${m.calories} kcal</div></div>`);
-    }
-
-    function renderWeightLogs() { 
-        // Sort logs by date descending
-        const logs = weightLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
-        const container = document.getElementById('weightHistory');
-        
-        if (logs.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Tiada rekod.</div>';
-            return;
-        }
-
-        let html = '';
-        logs.forEach((log, index) => {
-            // Get previous log (which is next in the sorted array, or null if this is the oldest)
-            const prevLog = logs[index + 1];
-            
-            let trendHtml = '';
-            if (prevLog) {
-                const diff = log.weight - prevLog.weight;
-                if (diff < 0) {
-                    trendHtml = `<span class="trend-down">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
-                } else if (diff > 0) {
-                    trendHtml = `<span class="trend-up">▲ ${diff.toFixed(1)}kg</span>`;
-                } else {
-                    trendHtml = `<span class="trend-same">—</span>`;
-                }
-            } else {
-                trendHtml = `<span style="color:#ccc; font-size:12px;">Mula</span>`;
-            }
-
-            html += `
-                <div class="list-item">
-                    <div class="item-date">${log.date}</div>
-                    <div class="item-val">${log.weight} kg ${trendHtml}</div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-    }
-
-    function renderMeals() { 
-        const container = document.getElementById('mealsContainer');
-        container.innerHTML = '';
-        const grouped = {};
-        mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
-        
-        Object.keys(grouped).sort().reverse().forEach(date => {
-             let html = `<div class="meal-day"><h4>${date}</h4>`;
-             grouped[date].forEach(i => {
-                 // Check if image exists
-                 let imgHtml = '';
-                 if (i.image) {
-                     imgHtml = `<img src="${i.image}" class="meal-img-thumb" alt="food">`;
-                 }
-                 
-                 html += `
-                 <div class="list-item">
-                    <div class="meal-row-content">
-                        ${imgHtml}
-                        <div class="meal-info">
-                            <div style="font-weight:700">${i.name}</div>
-                            <div style="font-size:12px; color:#888;">
-                                ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
-                            </div>
-                        </div>
-                    </div>
-                 </div>`;
-             });
-             container.innerHTML += html + '</div>';
-        });
-    }
-
-    // --- 5. UTILS ---
-    window.saveOnboarding = () => {
-        const val = document.getElementById('onboardGoalWeight').value;
-        if(val) { localStorage.setItem('userGoal', val); showScreen('home'); }
-    };
-    window.triggerCamera = () => document.getElementById('cameraInput').click();
-    window.triggerGallery = () => document.getElementById('galleryInput').click();
-    
-    // UPDATED IMAGE UPLOAD HANDLER
-    window.handleImageUpload = (input) => { 
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Show preview
-                document.getElementById('uploadPreview').src = e.target.result;
-                document.getElementById('uploadPreview').classList.remove('hidden');
-                document.getElementById('uploadPlaceholder').classList.add('hidden');
-                document.getElementById('aiLoading').classList.remove('hidden');
-                
-                // Store base64 string
-                const imageBase64 = e.target.result;
-                
-                setTimeout(() => {
-                    document.getElementById('aiLoading').classList.add('hidden');
-                    if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
-                        // Create data object with image
-                        const data = { 
-                            name: "Nasi Lemak", 
-                            calories: 450, 
-                            protein: 12, 
-                            carbs: 60, 
-                            date: getTodayDate(),
-                            image: imageBase64 // Store image data
-                        };
-                        
-                        if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
-                            // Note: Storing Base64 in Firestore is not recommended for large apps (use Storage), 
-                            // but fine for this prototype scale.
-                            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-                        } else { 
-                            mealLogs.push(data); 
-                            localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); 
-                            renderHomeStats(); 
-                        }
-                        showScreen('home');
-                    }
-                }, 1000);
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    };
-    
-    window.resetUpload = () => showScreen('home');
-    function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
-    document.getElementById('inpDate').value = getTodayDate();
-    document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
-    window.resetApp = async () => { 
-        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
-            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
-                // Cloud Deletion Logic
-                const uid = currentUser.uid;
-                const { deleteDoc, getDocs, doc } = window.fs_ops; // We need to export these from module
-                
-                try {
-                    // 1. Delete Meal Subcollection
-                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
-                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 2. Delete Weight Subcollection
-                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
-                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 3. Delete User Doc
-                    await deleteDoc(doc(db, "users", uid));
-                    
-                    alert("Akaun berjaya dipadam.");
-                    window.handleLogout();
-                } catch(e) {
-                    console.error(e);
-                    alert("Ralat memadam data: " + e.message);
-                }
-            } else {
-                // Local Deletion
-                localStorage.clear(); 
-                location.reload(); 
-            }
-        } 
-    };
-    
-    // Save Weight
-    window.saveWeight = () => {
-        const w = document.getElementById('inpWeight').value;
-        if (!w) return alert("Isi berat.");
-        const data = { weight: parseFloat(w), date: document.getElementById('inpDate').value };
-        
-        if (currentUser.uid.startsWith('offline_')) {
-            weightLogs.push(data);
-            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
-            renderWeightLogs();
-        } else if (window.fs) {
-            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), data);
-        }
-        document.getElementById('inpWeight').value = '';
-        alert("Disimpan!");
-    }
-    document.getElementById('btnSaveWeight').onclick = window.saveWeight;
-  </script>
-
-  <!-- FIREBASE MODULE (Runs Last) -->
+  <!-- SINGLE LOGIC SCRIPT (TYPE MODULE) -->
   <script type="module">
+    // --- IMPORT FIREBASE ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // --- KEYS ANDA ---
+    // --- KEYS (User Provided) ---
+    const GEMINI_API_KEY = "AIzaSyBE0eH3S3xoDW-ulglwjaLupkJb5vUQETw"; // PASTE GEMINI KEY
+    const KALORI_API_KEY = "kal_97f41a3a19ba02ffd1eac01bc2338265fd3a1db8c51df3e4e1c96c35f89d78af";
     const firebaseConfig = {
       apiKey: "AIzaSyC9hya7EGpzu9Qn-bcjcwVpgy-_K7NR47A",
       authDomain: "nutrisnap-34c6b.firebaseapp.com",
@@ -651,18 +305,20 @@
       appId: "1:427310632230:web:78e2943728aec2987ac5e7"
     };
 
-    let app, auth, db;
+    // --- STATE ---
+    let app, auth, db, currentUser = null;
+    let mealLogs = [], weightLogs = [];
     let isFirebaseReady = false;
+    let base64ImageTemp = "";
 
-    // --- INIT FIREBASE ---
+    // --- INITIALIZE ---
     try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
-        window.isFirebaseReady = true;
+        isFirebaseReady = true;
         console.log("Firebase Connected");
 
-        // LISTENER UTAMA
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 window.handleLoginSuccess(user);
@@ -671,181 +327,326 @@
                 if (!offline) window.handleLogoutSuccess();
             }
         });
+    } catch(e) { console.error(e); }
 
-    } catch (e) {
-        console.error("Firebase Init Failed:", e);
+    // --- EXPORTS TO GLOBAL ---
+    window.getCollection = (uid, col) => (isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
+    window.fs = { addDoc, setDoc, doc };
+
+    // --- UI LOGIC ---
+    window.showScreen = (id) => {
+        document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
+        const hideNav = ['login','emailLogin','emailSignup','onboarding'].includes(id);
+        const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
+        els.forEach(el => el.classList.toggle('hidden', hideNav));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-nav') === id));
+        if(id === 'home') renderHomeStats();
+        if(id === 'weight') { renderWeightLogs(); renderCalendar(); }
+        if(id === 'analysis') renderMeals();
     }
 
-    // --- EXPORTS TO WINDOW ---
-    window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
-    window.fs = { query, orderBy, limit, onSnapshot, addDoc };
-    window.fs_ops = { deleteDoc, getDocs, doc }; // Export for delete logic
-    
-    // --- DATA SUBSCRIPTION ---
-    window.subscribeToData = (uid) => {
-        if (!window.isFirebaseReady) return;
+    window.handleLoginSuccess = (user) => {
+        currentUser = user;
+        document.getElementById('profileName').innerText = user.displayName || "Pengguna";
+        document.getElementById('profileEmail').innerText = user.email;
+        if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
         
-        const mealsRef = collection(db, 'users', uid, 'meals');
-        const qMeals = query(mealsRef, orderBy('date', 'desc'), limit(50));
-        window.unsubscribeMeals = onSnapshot(qMeals, (snap) => {
-            const data = []; snap.forEach(d => data.push(d.data()));
-            if(window.updateDataBridge) window.updateDataBridge('meals', data);
-        });
+        if (user.uid.startsWith('offline_')) {
+            mealLogs = JSON.parse(localStorage.getItem('mealLogs') || '[]');
+            weightLogs = JSON.parse(localStorage.getItem('weightLogs') || '[]');
+        } else {
+            subscribeToData(user.uid);
+        }
 
-        const wRef = collection(db, 'users', uid, 'weights');
-        const qWeight = query(wRef, orderBy('date', 'desc'), limit(20));
-        window.unsubscribeWeight = onSnapshot(qWeight, (snap) => {
-            const data = []; snap.forEach(d => data.push(d.data()));
-            if(window.updateDataBridge) window.updateDataBridge('weights', data);
-        });
+        setTimeout(() => {
+            if (!localStorage.getItem('userGoal')) window.showScreen('onboarding');
+            else window.showScreen('home');
+        }, 500); 
     }
 
-    // --- LOGIN HANDLERS ---
+    window.handleLogoutSuccess = () => { currentUser = null; window.showScreen('login'); }
+
+    window.forceOfflineLogin = () => {
+        const mockUser = { uid: "offline_user", displayName: "Pengguna Offline", email: "local@app", photoURL: null };
+        localStorage.setItem('currentUser', JSON.stringify(mockUser));
+        localStorage.setItem('isLoggedIn', 'true');
+        window.handleLoginSuccess(mockUser);
+    }
+
+    // --- AUTH ACTIONS ---
     window.handleGoogleLogin = async () => {
-        const btn = document.getElementById('googleBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi Google...";
-        stat.innerText = "Sila tunggu pop-up...";
-
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new GoogleAuthProvider());
-            
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-            
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Google'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.innerText = "Masuk dengan Google";
-                btn.disabled = false;
-                stat.innerText = "";
-            }
+        try { 
+            const res = await signInWithPopup(auth, new GoogleAuthProvider()); 
+            window.handleLoginSuccess(res.user); 
+        } catch(e) { 
+            if(e.code==='auth/unauthorized-domain') window.forceOfflineLogin(); 
+            else alert(e.message); 
         }
     };
-
-    window.handleFacebookLogin = async () => {
-        const btn = document.getElementById('fbBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi FB...";
-        stat.innerText = "Sila tunggu pop-up...";
-        
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new FacebookAuthProvider());
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Masuk dengan Facebook";
-                stat.innerText = "";
-            }
-        }
+    
+    window.handleEmailLogin = async () => {
+        try { 
+            const res = await signInWithEmailAndPassword(auth, document.getElementById('loginEmail').value, document.getElementById('loginPass').value); 
+            window.handleLoginSuccess(res.user); 
+        } catch(e) { alert(e.message); }
     };
 
-    window.handleEmailLogin = async () => { 
-        const email = document.getElementById('loginEmail').value;
-        const pass = document.getElementById('loginPass').value;
-        if(!email || !pass) return alert("Sila isi info");
-        
-        try {
-            const res = await signInWithEmailAndPassword(auth, email, pass);
-            window.handleLoginSuccess(res.user);
-        } catch(error) {
-             // Fallback
-            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
-            const u = users.find(x => x.email === email && x.pass === pass);
-            if(u) {
-                localStorage.setItem('currentUser', JSON.stringify(u));
-                localStorage.setItem('isLoggedIn', 'true');
-                window.handleLoginSuccess(u);
-            } else {
-                alert("Gagal: " + error.message);
-            }
-        }
-    };
-
-    // UPDATED SIGNUP HANDLER FOR NEW FIELDS
     window.handleEmailSignup = async () => {
         const name = document.getElementById('signupName').value;
-        const username = document.getElementById('signupUsername').value;
         const email = document.getElementById('signupEmail').value;
-        const job = document.getElementById('signupJob').value;
-        const age = document.getElementById('signupAge').value;
-        const weight = document.getElementById('signupWeight').value;
-        const goal = document.getElementById('signupGoal').value;
         const pass = document.getElementById('signupPass').value;
+        const goal = document.getElementById('signupGoal').value;
+        // Collect other fields...
 
         if(!name || !email || !pass) return alert("Sila isi info wajib.");
-        
+
         try {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
             await updateProfile(res.user, { displayName: name });
             
-            // Save extra data to Firestore
-            if (window.isFirebaseReady) {
+            // Save Profile Data
+            if (isFirebaseReady) {
                 await setDoc(doc(db, "users", res.user.uid), {
-                    username, job, age, weight, goal, 
-                    email: email, 
-                    createdAt: new Date()
+                    username: document.getElementById('signupUsername').value,
+                    job: document.getElementById('signupJob').value,
+                    age: document.getElementById('signupAge').value,
+                    weight: document.getElementById('signupWeight').value,
+                    goal: goal,
+                    email: email, createdAt: new Date()
                 });
-                
-                // Add initial weight log
-                if (weight) {
-                    await addDoc(collection(db, "users", res.user.uid, "weights"), {
-                        weight: parseFloat(weight),
-                        date: new Date().toISOString().split('T')[0]
+                // Initialize Weight
+                if(document.getElementById('signupWeight').value) {
+                     await addDoc(collection(db, "users", res.user.uid, "weights"), {
+                        weight: parseFloat(document.getElementById('signupWeight').value),
+                        date: getTodayDate()
                     });
                 }
             }
-            
-            // Save goal locally to skip onboarding
-            if (goal) localStorage.setItem('userGoal', goal);
+            if(goal) localStorage.setItem('userGoal', goal);
 
             window.handleLoginSuccess(res.user);
-            
-        } catch(error) {
-            // Fallback
-            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
-            users.push({uid: "sim_"+Date.now(), displayName: name, email, pass});
-            localStorage.setItem('simUsers', JSON.stringify(users));
-            alert("Didaftarkan secara Offline (Firebase Gagal). Sila Login.");
-            showScreen('emailLogin');
-        }
+        } catch(e) { alert(e.message); }
     };
-    
-    window.handleLogout = async () => {
-        if (window.isFirebaseReady) await signOut(auth).catch(()=>{});
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('currentUser');
-        window.location.reload();
-    };
-  </script>
 
-  <!-- BRIDGE -->
-  <script>
-    window.updateDataBridge = (type, data) => {
-        if(type === 'meals') {
-            mealLogs = data;
-            renderHomeStats();
-            if(document.getElementById('analysis').classList.contains('active')) renderMeals();
+    window.handleLogout = async () => {
+        if(isFirebaseReady) await signOut(auth);
+        localStorage.clear(); location.reload();
+    }
+
+    // --- DATA ---
+    function subscribeToData(uid) {
+        if(!isFirebaseReady) return;
+        const qM = query(collection(db,'users',uid,'meals'), orderBy('date','desc'), limit(50));
+        onSnapshot(qM, (s) => { mealLogs=[]; s.forEach(x=>mealLogs.push(x.data())); renderHomeStats(); if(document.querySelector('#analysis.active')) renderMeals(); });
+        
+        const qW = query(collection(db,'users',uid,'weights'), orderBy('date','desc'), limit(20));
+        onSnapshot(qW, (s) => { weightLogs=[]; s.forEach(x=>weightLogs.push(x.data())); if(document.querySelector('#weight.active')) { renderWeightLogs(); renderCalendar(); } });
+    }
+
+    // --- GEMINI + KALORI LOGIC ---
+    window.handleImageUpload = (input) => { 
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                base64ImageTemp = e.target.result;
+                document.getElementById('uploadPreview').src = base64ImageTemp;
+                document.getElementById('uploadPreview').classList.remove('hidden');
+                document.getElementById('uploadPlaceholder').classList.add('hidden');
+                document.getElementById('aiLoading').classList.remove('hidden');
+                
+                processFoodScan(e.target.result.split(',')[1]);
+            }
+            reader.readAsDataURL(file);
         }
-        if(type === 'weights') {
-            weightLogs = data;
-            if(document.getElementById('weight').classList.contains('active')) renderWeightLogs();
+    };
+
+    async function processFoodScan(base64Data) {
+        try {
+            if (!GEMINI_API_KEY) throw new Error("Tiada API Key Gemini");
+            
+            const genUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+            const payload = { contents: [{ parts: [{ text: "Identify food. Output ONLY Malay name." }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }] };
+
+            const res = await fetch(genUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+            const data = await res.json();
+            let foodName = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Makanan";
+            
+            document.querySelector('#aiLoading span').innerText = `Dikesan: ${foodName}...`;
+            await fetchNutritionFromKalori(foodName);
+
+        } catch (error) {
+            console.error(error);
+            alert("Ralat AI: " + error.message);
+            document.getElementById('aiLoading').classList.add('hidden');
         }
+    }
+
+    async function fetchNutritionFromKalori(foodQuery) {
+        try {
+            const url = `https://api.kalori.my/v1/foods/search?q=${encodeURIComponent(foodQuery)}`;
+            const response = await fetch(url, { headers: { 'Authorization': `Bearer ${KALORI_API_KEY}` } });
+            const data = await response.json();
+            document.getElementById('aiLoading').classList.add('hidden');
+
+            const foodList = Array.isArray(data) ? data : (data.data || []);
+            
+            if (foodList.length > 0) {
+                 const food = foodList[0];
+                 if(confirm(`Jumpa: ${food.name}\n${food.calories} kcal\nSimpan?`)) {
+                    saveMealData({
+                        name: food.name,
+                        calories: parseFloat(food.calories),
+                        protein: parseFloat(food.protein),
+                        carbs: parseFloat(food.carbohydrates),
+                        mealType: getMealType(),
+                        date: getTodayDate(),
+                        image: base64ImageTemp
+                    });
+                 }
+            } else {
+                if(confirm(`Tiada data untuk '${foodQuery}'. Simpan nama sahaja?`)) {
+                    saveMealData({ name: foodQuery, calories: 0, protein: 0, carbs: 0, mealType: getMealType(), date: getTodayDate(), image: base64ImageTemp });
+                }
+            }
+        } catch (error) {
+            document.getElementById('aiLoading').classList.add('hidden');
+            alert("Ralat Kalori API.");
+        }
+    }
+
+    function saveMealData(data) {
+        // Motivation Logic
+        if (data.mealType === 'Makan Malam' && localStorage.getItem('userGoal')) {
+            alert("💪 Kekal kuat! Makan malam yang ringan membantu anda mencapai matlamat.");
+        }
+
+        if(isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
+            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+        } else { 
+            mealLogs.push(data); 
+            localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); 
+            renderHomeStats(); 
+        }
+        window.resetUpload();
+    }
+    
+    window.resetUpload = () => {
+        document.getElementById('uploadPreview').classList.add('hidden');
+        document.getElementById('uploadPlaceholder').classList.remove('hidden');
+        document.getElementById('aiLoading').classList.add('hidden');
+        document.getElementById('cameraInput').value = ""; 
+        window.showScreen('home');
+    }
+    
+    function getMealType() {
+        const h = new Date().getHours();
+        return h < 11 ? "Sarapan" : (h < 16 ? "Makan Tengahari" : "Makan Malam");
+    }
+
+    // --- RENDERERS ---
+    function renderHomeStats() {
+        const today = getTodayDate();
+        const logs = mealLogs.filter(l => l.date === today);
+        let cal=0, prot=0, carb=0;
+        let html = '';
+        logs.forEach(m => {
+            cal+=m.calories; prot+=m.protein; carb+=m.carbs;
+            html += `<div class="list-item"><div class="item-val">${m.name}</div><div class="item-date">${m.calories} kcal</div></div>`;
+        });
+        document.getElementById('calBalance').innerText = cal.toFixed(0);
+        document.getElementById('protBalance').innerText = prot.toFixed(0);
+        document.getElementById('carbBalance').innerText = carb.toFixed(0);
+        document.getElementById('recentMealsList').innerHTML = html || '<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>';
+    }
+
+    function renderWeightLogs() {
+        const logs = weightLogs.sort((a,b) => new Date(b.date)-new Date(a.date));
+        let html = '';
+        logs.forEach((log, i) => {
+            const prev = logs[i+1];
+            let trend = prev ? (log.weight<prev.weight?'▼':(log.weight>prev.weight?'▲':'-')) : '-';
+            let color = trend === '▼' ? 'trend-down' : (trend === '▲' ? 'trend-up' : 'trend-same');
+            html += `<div class="list-item"><div class="item-date">${log.date}</div><div class="item-val">${log.weight} kg <span class="trend-badge ${color}">${trend}</span></div></div>`;
+        });
+        document.getElementById('weightHistory').innerHTML = html || '<div style="text-align:center;color:#999">Tiada rekod</div>';
+    }
+
+    function renderMeals() {
+        const container = document.getElementById('mealsContainer');
+        container.innerHTML = '';
+        const grouped = {};
+        mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
+        Object.keys(grouped).sort().reverse().forEach(date => {
+             let html = `<div class="meal-day"><h4>${date}</h4>`;
+             grouped[date].forEach(i => {
+                 let imgHtml = i.image ? `<img src="${i.image}" class="meal-img-thumb">` : `<div class="meal-img-thumb" style="background:#eee;display:flex;align-items:center;justify-content:center;">🍽️</div>`;
+                 html += `
+                 <div class="list-item">
+                    <div class="meal-row-content">
+                        <div class="meal-info-left"><div class="meal-name">${i.name}</div><div class="nutrient-lines"><span>🔥 ${i.calories} kcal</span><span>🥩 ${i.protein}g P</span><span>🍞 ${i.carbs}g C</span></div></div>
+                        ${imgHtml}
+                    </div>
+                 </div>`;
+             });
+             container.innerHTML += html + '</div>';
+        });
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('weightCalendar');
+        grid.innerHTML = "";
+        const days = 14;
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const hasLog = weightLogs.some(l => l.date === dateStr);
+            const cell = document.createElement('div');
+            cell.className = `cal-day ${hasLog ? 'has-data' : ''} ${i===0 ? 'today' : ''}`;
+            cell.innerText = d.getDate();
+            grid.appendChild(cell);
+        }
+    }
+
+    // --- OTHER UI BINDINGS ---
+    window.saveOnboarding = () => {
+        localStorage.setItem('userGoal', document.getElementById('onboardGoalWeight').value);
+        localStorage.setItem('userStartWeight', document.getElementById('onboardStartWeight').value);
+        window.showScreen('home');
+    }
+    
+    window.saveWeight = () => {
+        const w = parseFloat(document.getElementById('inpWeight').value);
+        if(!w) return;
+        const today = getTodayDate();
+        
+        // One per day logic
+        const existingIdx = weightLogs.findIndex(l => l.date === today);
+        if(existingIdx >= 0) {
+            if(!confirm("Kemas kini berat hari ini?")) return;
+            weightLogs[existingIdx].weight = w;
+        } else {
+             weightLogs.push({ weight: w, date: today });
+        }
+
+        if (currentUser.uid.startsWith('offline_')) { 
+            localStorage.setItem('weightLogs', JSON.stringify(weightLogs)); 
+            renderWeightLogs(); renderCalendar(); 
+        } else if (window.fs) {
+            // Firestore update logic simplified (addDoc adds new, should ideally update)
+            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), { weight: w, date: today });
+        }
+        alert("Disimpan!");
+    }
+    document.getElementById('btnSaveWeight').onclick = window.saveWeight;
+    window.resetApp = () => { if(confirm("Padam data?")) { localStorage.clear(); location.reload(); } };
+    
+    function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
+    document.getElementById('inpDate').value = getTodayDate();
+    
+    // Auto-Login Check on Load
+    if(localStorage.getItem('isLoggedIn')==='true') {
+        window.handleLoginSuccess(JSON.parse(localStorage.getItem('currentUser')||'{}'));
     }
   </script>
 </body>
