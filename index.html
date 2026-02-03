@@ -568,40 +568,38 @@
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
-    window.resetApp = async () => {
-
-  if(!confirm("AWAS: Ini akan memadam semua data anda. Teruskan?")) return;
-
-  if(!currentUser) return;
-
-  try{
-
-    // delete meals
-    const mealsSnap = await getDocs(
-      collection(db,"users",currentUser.uid,"meals")
-    );
-
-    for(const d of mealsSnap.docs){
-      await deleteDoc(d.ref);
-    }
-
-    // delete weights
-    const weightSnap = await getDocs(
-      collection(db,"users",currentUser.uid,"weights")
-    );
-
-    for(const d of weightSnap.docs){
-      await deleteDoc(d.ref);
-    }
-
-    alert("Semua data berjaya dipadam!");
-
-  }catch(e){
-    console.error(e);
-    alert("Ralat memadam data: " + e.message);
-  }
-};
-
+    window.resetApp = async () => { 
+        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
+            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
+                // Cloud Deletion Logic
+                const uid = currentUser.uid;
+              const { deleteDoc, getDocs, doc } = window.fs_ops;
+                
+                try {
+                    // 1. Delete Meal Subcollection
+                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
+                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    
+                    // 2. Delete Weight Subcollection
+                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
+                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    
+                    // 3. Delete User Doc
+                    await deleteDoc(doc(db, "users", uid));
+                    
+                    alert("Akaun berjaya dipadam.");
+                    window.handleLogout();
+                } catch(e) {
+                    console.error(e);
+                    alert("Ralat memadam data: " + e.message);
+                }
+            } else {
+                // Local Deletion
+                localStorage.clear(); 
+                location.reload(); 
+            }
+        } 
+    };
     
     // Save Weight
     window.saveWeight = () => {
@@ -646,10 +644,9 @@ import {
   query,
   orderBy,
   onSnapshot,
-  limit,
-  getDocs,
-  deleteDoc
+  limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 
 // 🔑 YOUR FIREBASE CONFIG
 const firebaseConfig = {
@@ -780,5 +777,3 @@ function subscribeToData(uid){
   </script>
 </body>
 </html>
-
-
