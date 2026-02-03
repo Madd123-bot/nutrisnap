@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ms">
 <head>
@@ -183,6 +182,11 @@
              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
              Masuk dengan Google
           </button>
+
+          <button id="fbBtn" class="fb-btn" onclick="window.handleFacebookLogin()">
+             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
+             Masuk dengan Facebook
+          </button>
           
           <div id="loginStatus" class="status-text"></div>
 
@@ -194,7 +198,12 @@
             <p>Tiada akaun? <a href="#" style="color:var(--primary); text-decoration:none; font-weight:700;" data-nav="emailSignup">Daftar sekarang</a></p>
           </div>
 
-          
+          <!-- DEV BYPASS BUTTON -->
+          <div style="margin-top:20px; border-top:1px dashed #eee; padding-top:10px;">
+            <button style="background:transparent; color:#bbb; border:1px dashed #ccc; font-size:12px; cursor:pointer;" onclick="window.forceOfflineLogin()">
+              🛠️ [Pintas] Masuk Tanpa Login
+            </button>
+          </div>
         </div>
       </section>
 
@@ -370,6 +379,8 @@
 
     // --- 2. GLOBAL STATE ---
     let currentUser = null, mealLogs = [], weightLogs = [];
+    let activeMealMetric = 'calories';
+    const API_KEY = ""; 
 
     // --- 3. LOGIN SUCCESS HANDLER ---
     window.handleLoginSuccess = (user) => {
@@ -410,7 +421,17 @@
         showScreen('login');
     }
 
-    
+    window.forceOfflineLogin = (provider = "Offline") => {
+        const mockUser = { 
+            uid: "offline_user_" + Date.now(), 
+            displayName: "Pengguna " + provider, 
+            email: provider.toLowerCase() + "@nutrisnap.com", 
+            photoURL: null 
+        };
+        localStorage.setItem('currentUser', JSON.stringify(mockUser));
+        localStorage.setItem('isLoggedIn', 'true');
+        window.handleLoginSuccess(mockUser);
+    }
 
     // Auto-Login Check (Local)
     window.addEventListener('load', () => {
@@ -433,12 +454,6 @@
         list.innerHTML = logs.length ? '' : `<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>`;
         logs.forEach(m => list.innerHTML += `<div class="list-item"><div class="item-val">${m.name}</div><div class="item-date">${m.calories} kcal</div></div>`);
     }
-    function saveMeal(data){
-  addDoc(collection(db,"users",currentUser.uid,"meals"),data);
-}
-
-    addDoc(collection(db,"users",currentUser.uid,"weights"),data);
-
 
     function renderWeightLogs() { 
         // Sort logs by date descending
@@ -568,40 +583,38 @@
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
-    window.resetApp = async () => {
-
-  if(!confirm("AWAS: Ini akan memadam semua data anda. Teruskan?")) return;
-
-  if(!currentUser) return;
-
-  try{
-
-    // delete meals
-    const mealsSnap = await getDocs(
-      collection(db,"users",currentUser.uid,"meals")
-    );
-
-    for(const d of mealsSnap.docs){
-      await deleteDoc(d.ref);
-    }
-
-    // delete weights
-    const weightSnap = await getDocs(
-      collection(db,"users",currentUser.uid,"weights")
-    );
-
-    for(const d of weightSnap.docs){
-      await deleteDoc(d.ref);
-    }
-
-    alert("Semua data berjaya dipadam!");
-
-  }catch(e){
-    console.error(e);
-    alert("Ralat memadam data: " + e.message);
-  }
-};
-
+    window.resetApp = async () => { 
+        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
+            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
+                // Cloud Deletion Logic
+                const uid = currentUser.uid;
+                const { deleteDoc, getDocs, doc } = window.fs_ops; // We need to export these from module
+                
+                try {
+                    // 1. Delete Meal Subcollection
+                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
+                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    
+                    // 2. Delete Weight Subcollection
+                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
+                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
+                    
+                    // 3. Delete User Doc
+                    await deleteDoc(doc(db, "users", uid));
+                    
+                    alert("Akaun berjaya dipadam.");
+                    window.handleLogout();
+                } catch(e) {
+                    console.error(e);
+                    alert("Ralat memadam data: " + e.message);
+                }
+            } else {
+                // Local Deletion
+                localStorage.clear(); 
+                location.reload(); 
+            }
+        } 
+    };
     
     // Save Weight
     window.saveWeight = () => {
@@ -624,144 +637,201 @@
 
   <!-- FIREBASE MODULE (Runs Last) -->
   <script type="module">
-   <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getAuth,
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  updateProfile,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // --- KEYS ANDA ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyC9hya7EGpzu9Qn-bcjcwVpgy-_K7NR47A",
+      authDomain: "nutrisnap-34c6b.firebaseapp.com",
+      projectId: "nutrisnap-34c6b",
+      storageBucket: "nutrisnap-34c6b.firebasestorage.app",
+      messagingSenderId: "427310632230",
+      appId: "1:427310632230:web:78e2943728aec2987ac5e7"
+    };
 
-import { 
-  getFirestore,
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  limit,
-  getDocs,
-  deleteDoc
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    let app, auth, db;
+    let isFirebaseReady = false;
 
-// 🔑 YOUR FIREBASE CONFIG
-const firebaseConfig = {
-  apiKey: "AIzaSyC9hya7EGpzu9Qn-bcjcwVpgy-_K7NR47A",
-  authDomain: "nutrisnap-34c6b.firebaseapp.com",
-  projectId: "nutrisnap-34c6b",
-  storageBucket: "nutrisnap-34c6b.firebasestorage.app",
-  messagingSenderId: "427310632230",
-  appId: "1:427310632230:web:78e2943728aec2987ac5e7"
-};
+    // --- INIT FIREBASE ---
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        window.isFirebaseReady = true;
+        console.log("Firebase Connected");
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+        // LISTENER UTAMA
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.handleLoginSuccess(user);
+            } else {
+                const offline = localStorage.getItem('isLoggedIn') === 'true';
+                if (!offline) window.handleLogoutSuccess();
+            }
+        });
 
+    } catch (e) {
+        console.error("Firebase Init Failed:", e);
+    }
 
-// 🌐 expose helpers
-window.db = db;
-window.addDoc = addDoc;
-window.collection = collection;
-window.query = query;
-window.orderBy = orderBy;
-window.onSnapshot = onSnapshot;
-window.limit = limit;
+    // --- EXPORTS TO WINDOW ---
+    window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
+    window.fs = { query, orderBy, limit, onSnapshot, addDoc };
+    window.fs_ops = { deleteDoc, getDocs, doc }; // Export for delete logic
+    
+    // --- DATA SUBSCRIPTION ---
+    window.subscribeToData = (uid) => {
+        if (!window.isFirebaseReady) return;
+        
+        const mealsRef = collection(db, 'users', uid, 'meals');
+        const qMeals = query(mealsRef, orderBy('date', 'desc'), limit(50));
+        window.unsubscribeMeals = onSnapshot(qMeals, (snap) => {
+            const data = []; snap.forEach(d => data.push(d.data()));
+            if(window.updateDataBridge) window.updateDataBridge('meals', data);
+        });
 
+        const wRef = collection(db, 'users', uid, 'weights');
+        const qWeight = query(wRef, orderBy('date', 'desc'), limit(20));
+        window.unsubscribeWeight = onSnapshot(qWeight, (snap) => {
+            const data = []; snap.forEach(d => data.push(d.data()));
+            if(window.updateDataBridge) window.updateDataBridge('weights', data);
+        });
+    }
 
-// 🔁 AUTH STATE
-onAuthStateChanged(auth, user => {
+    // --- LOGIN HANDLERS ---
+    window.handleGoogleLogin = async () => {
+        const btn = document.getElementById('googleBtn');
+        const stat = document.getElementById('loginStatus');
+        btn.disabled = true;
+        btn.innerText = "Menghubungi Google...";
+        stat.innerText = "Sila tunggu pop-up...";
 
-  if(user){
-    currentUser = user;
+        try {
+            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
+            const result = await signInWithPopup(auth, new GoogleAuthProvider());
+            
+            stat.innerText = "Berjaya! Mengalih...";
+            window.handleLoginSuccess(result.user);
+            
+        } catch (error) {
+            console.error("Login Error:", error);
+            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
+                stat.innerText = "Domain Blocked. Entering Offline Mode...";
+                setTimeout(() => window.forceOfflineLogin('Google'), 1000);
+            } else {
+                alert("Ralat: " + error.message);
+                btn.innerText = "Masuk dengan Google";
+                btn.disabled = false;
+                stat.innerText = "";
+            }
+        }
+    };
 
-    document.getElementById("profileName").innerText = user.displayName || "User";
-    document.getElementById("profileEmail").innerText = user.email;
+    window.handleFacebookLogin = async () => {
+        const btn = document.getElementById('fbBtn');
+        const stat = document.getElementById('loginStatus');
+        btn.disabled = true;
+        btn.innerText = "Menghubungi FB...";
+        stat.innerText = "Sila tunggu pop-up...";
+        
+        try {
+            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
+            const result = await signInWithPopup(auth, new FacebookAuthProvider());
+            stat.innerText = "Berjaya! Mengalih...";
+            window.handleLoginSuccess(result.user);
+        } catch (error) {
+            console.error("Login Error:", error);
+            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
+                stat.innerText = "Domain Blocked. Entering Offline Mode...";
+                setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
+            } else {
+                alert("Ralat: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "Masuk dengan Facebook";
+                stat.innerText = "";
+            }
+        }
+    };
 
-    showScreen("home");
-    subscribeToData(user.uid);
+    window.handleEmailLogin = async () => { 
+        const email = document.getElementById('loginEmail').value;
+        const pass = document.getElementById('loginPass').value;
+        if(!email || !pass) return alert("Sila isi info");
+        
+        try {
+            const res = await signInWithEmailAndPassword(auth, email, pass);
+            window.handleLoginSuccess(res.user);
+        } catch(error) {
+             // Fallback
+            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
+            const u = users.find(x => x.email === email && x.pass === pass);
+            if(u) {
+                localStorage.setItem('currentUser', JSON.stringify(u));
+                localStorage.setItem('isLoggedIn', 'true');
+                window.handleLoginSuccess(u);
+            } else {
+                alert("Gagal: " + error.message);
+            }
+        }
+    };
 
-  } else {
-    currentUser = null;
-    showScreen("login");
-  }
+    // UPDATED SIGNUP HANDLER FOR NEW FIELDS
+    window.handleEmailSignup = async () => {
+        const name = document.getElementById('signupName').value;
+        const username = document.getElementById('signupUsername').value;
+        const email = document.getElementById('signupEmail').value;
+        const job = document.getElementById('signupJob').value;
+        const age = document.getElementById('signupAge').value;
+        const weight = document.getElementById('signupWeight').value;
+        const goal = document.getElementById('signupGoal').value;
+        const pass = document.getElementById('signupPass').value;
 
-});
+        if(!name || !email || !pass) return alert("Sila isi info wajib.");
+        
+        try {
+            const res = await createUserWithEmailAndPassword(auth, email, pass);
+            await updateProfile(res.user, { displayName: name });
+            
+            // Save extra data to Firestore
+            if (window.isFirebaseReady) {
+                await setDoc(doc(db, "users", res.user.uid), {
+                    username, job, age, weight, goal, 
+                    email: email, 
+                    createdAt: new Date()
+                });
+                
+                // Add initial weight log
+                if (weight) {
+                    await addDoc(collection(db, "users", res.user.uid, "weights"), {
+                        weight: parseFloat(weight),
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                }
+            }
+            
+            // Save goal locally to skip onboarding
+            if (goal) localStorage.setItem('userGoal', goal);
 
-
-// 👉 LOGIN HANDLERS
-
-window.handleGoogleLogin = async () => {
-  await signInWithPopup(auth, new GoogleAuthProvider());
-};
-
-window.handleFacebookLogin = async () => {
-  await signInWithPopup(auth, new FacebookAuthProvider());
-};
-
-window.handleEmailLogin = async () => {
-
-  const email = loginEmail.value;
-  const pass = loginPass.value;
-
-  if(!email || !pass) return alert("Isi semua");
-
-  await signInWithEmailAndPassword(auth, email, pass);
-};
-
-window.handleEmailSignup = async () => {
-
-  const name = signupName.value;
-  const email = signupEmail.value;
-  const pass = signupPass.value;
-
-  if(!name || !email || !pass) return alert("Isi semua");
-
-  const res = await createUserWithEmailAndPassword(auth, email, pass);
-  await updateProfile(res.user, { displayName: name });
-};
-
-window.handleLogout = async () => {
-  await signOut(auth);
-};
-
-
-// 📡 DATA SYNC
-
-function subscribeToData(uid){
-
-  const mealsRef = collection(db,"users",uid,"meals");
-  const qMeals = query(mealsRef, orderBy("date","desc"), limit(50));
-
-  onSnapshot(qMeals, snap => {
-    const arr = [];
-    snap.forEach(d => arr.push(d.data()));
-    mealLogs = arr;
-    renderHomeStats();
-    renderMeals();
-  });
-
-  const wRef = collection(db,"users",uid,"weights");
-  const qW = query(wRef, orderBy("date","desc"), limit(20));
-
-  onSnapshot(qW, snap => {
-    const arr = [];
-    snap.forEach(d => arr.push(d.data()));
-    weightLogs = arr;
-    renderWeightLogs();
-  });
-
-}
-
-</script>
-
+            window.handleLoginSuccess(res.user);
+            
+        } catch(error) {
+            // Fallback
+            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
+            users.push({uid: "sim_"+Date.now(), displayName: name, email, pass});
+            localStorage.setItem('simUsers', JSON.stringify(users));
+            alert("Didaftarkan secara Offline (Firebase Gagal). Sila Login.");
+            showScreen('emailLogin');
+        }
+    };
+    
+    window.handleLogout = async () => {
+        if (window.isFirebaseReady) await signOut(auth).catch(()=>{});
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('currentUser');
+        window.location.reload();
+    };
   </script>
 
   <!-- BRIDGE -->
@@ -780,4 +850,3 @@ function subscribeToData(uid){
   </script>
 </body>
 </html>
-
