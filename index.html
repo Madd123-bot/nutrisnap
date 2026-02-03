@@ -14,9 +14,9 @@
       --primary-gradient: linear-gradient(135deg, #377CFF 0%, #00C6FF 100%);
       --soft: #eef6ff;
       --muted: #8898aa;
-      --accent: #2dce89;
-      --accent-gradient: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
-      --danger: #f5365c;
+      --accent: #2dce89; /* Green */
+      --danger: #f5365c; /* Red */
+      --warning: #fb6340; /* Orange/Yellow */
       --radius: 16px; 
       font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
@@ -52,12 +52,11 @@
     .screen.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Login Card */
+    /* Cards */
     .login-card {
         background: rgba(255, 255, 255, 0.98); padding: 30px 20px; border-radius: var(--radius);
         box-shadow: 0 10px 25px rgba(50,50,93,0.15); text-align: center; max-width: 400px; margin: 40px auto;
     }
-    .login-card h1 { margin-top: 0; color: var(--primary); font-size: 26px; }
     
     /* Inputs & Buttons */
     input, select {
@@ -68,7 +67,6 @@
         width: 100%; padding: 14px; border: none; border-radius: 10px;
         font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
         transition: transform 0.1s;
-        display: flex; align-items: center; justify-content: center; gap: 10px;
     }
     button:active { transform: scale(0.97); }
     .primary { background: var(--primary-gradient); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
@@ -76,14 +74,7 @@
     .accent-btn { background: var(--accent-gradient); color: white; }
     .danger-btn { background: #fff0f3; color: var(--danger); }
     
-    .divider { margin: 25px 0; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
-
-    /* Status Message */
-    .status-text {
-        font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 10px; min-height: 20px;
-    }
-
-    /* Stats & Lists */
+    /* Dashboard Stats */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 25px; }
     .stat-card {
         background: var(--card); padding: 15px; border-radius: var(--radius);
@@ -91,57 +82,99 @@
         display: flex; flex-direction: column; justify-content: center; align-items: center;
     }
     .stat-card.full-width { grid-column: span 2; background: linear-gradient(to right bottom, #ffffff, #f8fbff); }
-    .stat-card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--primary-gradient); }
     .stat-val { font-size: 24px; font-weight: 800; color: #32325d; }
     .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
 
-    /* Smart Weight & List Styles */
+    /* ---- NEW DIARY LAYOUT ---- */
+    .meal-day { margin-bottom: 20px; }
+    .meal-day h4 { color: var(--primary); margin: 0 0 10px 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+    
     .list-item {
         background: var(--card); padding: 12px; border-radius: 12px; margin-bottom: 12px;
         display: flex; justify-content: space-between; align-items: center;
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
-    .item-val { font-weight: 700; font-size: 16px; color: #32325d; display: flex; align-items: center; gap: 10px; }
 
-    .trend-badge { font-size: 12px; padding: 4px 8px; border-radius: 20px; font-weight: bold; display: inline-block; }
-    .t-loss { background: #d1fae5; color: #047857; } 
-    .t-gain { background: #fee2e2; color: #b91c1c; } 
-    .t-same { background: #fef3c7; color: #b45309; }
+    /* Layout: Nutrients Left, Image Right */
+    .meal-row-content { 
+        display: flex; 
+        align-items: center; 
+        width: 100%; 
+        justify-content: space-between; 
+    }
+    
+    .meal-info-left {
+        flex: 1;
+        text-align: left;
+    }
+    
+    .meal-name {
+        font-weight: 800;
+        font-size: 16px;
+        margin-bottom: 6px;
+        color: #32325d;
+    }
 
-    /* Meal Diary Layout */
-    .meal-row-content { display: flex; align-items: center; width: 100%; justify-content: space-between; }
-    .meal-info-left { flex: 1; text-align: left; }
-    .meal-name { font-weight: 800; font-size: 16px; margin-bottom: 6px; color: #32325d; }
-    .nutrient-lines { font-size: 12px; color: #888; display: flex; flex-direction: column; gap: 2px; }
-    .meal-img-thumb { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; margin-left: 15px; background: #eee; border: 2px solid #f0f0f0; }
+    .nutrient-lines {
+        font-size: 12px;
+        color: #888;
+        display: flex;
+        flex-direction: column; /* Stack vertically */
+        gap: 2px;
+    }
+    
+    .nutrient-lines span {
+        display: block;
+    }
 
-    /* Calendar */
-    .calendar-wrapper { background: white; padding: 15px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(50,50,93,0.05); }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 12px; }
+    .meal-img-thumb {
+        width: 70px; height: 70px; 
+        border-radius: 10px; 
+        object-fit: cover; 
+        margin-left: 15px; /* Push to right */
+        background: #eee;
+        border: 2px solid #f0f0f0;
+    }
+
+    /* ---- WEIGHT CALENDAR & TRENDS ---- */
+    .trend-badge {
+        font-size: 12px; padding: 4px 8px; border-radius: 20px; font-weight: bold; display: inline-block;
+    }
+    .t-loss { background: #d1fae5; color: #047857; } /* Green */
+    .t-gain { background: #fee2e2; color: #b91c1c; } /* Red */
+    .t-same { background: #fef3c7; color: #b45309; } /* Yellow */
+
+    .calendar-wrapper {
+        background: white; padding: 15px; border-radius: 16px; margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(50,50,93,0.05);
+    }
+    .calendar-grid {
+        display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 12px;
+    }
     .cal-day { padding: 8px 0; border-radius: 8px; color: #888; }
     .cal-day.has-data { background: var(--soft); color: var(--primary); font-weight: bold; }
     .cal-day.today { border: 1px solid var(--primary); }
 
     /* Nav */
     .fab-btn {
-        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+        position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
         width: 60px; height: 60px; border-radius: 50%; background: var(--accent-gradient); color: white;
         border: none; box-shadow: 0 10px 20px rgba(45, 206, 137, 0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
     .bottombar {
-        position: fixed; bottom: 0; left: 0; right: 0; height: 75px; 
+        position: absolute; bottom: 0; left: 0; right: 0; height: 75px; 
         background: rgba(255, 255, 255, 0.98);
         display: flex; justify-content: space-between; align-items: center; padding: 0 15px; 
         box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
     }
     .nav-btn {
-        flex: 1; background: none; border: none; padding: 8px; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; color: #adb5bd; font-size: 11px; font-weight: 600; gap: 5px;
-        margin: 0 5px; border-radius: 16px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        flex: 1; background: none; border: none; padding: 8px; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center; 
+        color: #adb5bd; font-size: 11px; font-weight: 600; gap: 5px;
+        margin: 0 5px; border-radius: 16px; transition: all 0.3s; 
     }
     .nav-btn.active { color: var(--primary); background-color: rgba(55, 124, 255, 0.15); transform: translateY(-2px); }
     .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
-    .nav-spacer { width: 70px; } 
 
     /* Upload UI */
     .upload-box { background:#f6f9fc; height:200px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#cbd5e0; border:2px dashed #e2e8f0; position:relative; overflow:hidden; }
@@ -155,40 +188,19 @@
 
   <div id="app">
     <header class="topbar">
-      <div class="brand">NutriSnap</div>
+      <div class="brand">NutriSnap AI</div>
       <div id="userIcon" class="user-icon hidden" data-nav="profile">A</div>
     </header>
 
-    <!-- Main Screens -->
     <main class="screens">
-      
-      <!-- 1. LOGIN SCREEN -->
+      <!-- Login -->
       <section id="login" class="screen active">
         <div class="login-card">
           <h1>Selamat Datang</h1>
-          <p style="color:#8898aa;">Sila log masuk untuk menyimpan data.</p>
-          
-          <button id="googleBtn" class="primary" onclick="window.handleGoogleLogin()">
-             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
-             Masuk dengan Google
-          </button>
-          
-          <div id="loginStatus" class="status-text"></div>
-
-          <div class="divider">ATAU</div>
-          
-          <button class="secondary" data-nav="emailLogin">Log Masuk dengan Akaun</button>
-          
-          <div class="login-hint" style="margin-top:15px; font-size:14px; color:#888;">
-            <p>Tiada akaun? <a href="#" style="color:var(--primary); text-decoration:none; font-weight:700;" data-nav="emailSignup">Daftar sekarang</a></p>
-          </div>
-
-          <!-- DEV BYPASS BUTTON -->
-          <div style="margin-top:20px; border-top:1px dashed #eee; padding-top:10px;">
-            <button style="background:transparent; color:#bbb; border:1px dashed #ccc; font-size:12px; cursor:pointer;" onclick="window.forceOfflineLogin()">
-              🛠️ [Pintas] Masuk Tanpa Login
-            </button>
-          </div>
+          <p style="color:#8898aa;">Log masuk untuk mula.</p>
+          <button id="googleBtn" class="primary" onclick="window.handleGoogleLogin()">Masuk dengan Google</button>
+          <div style="margin:10px 0; color:#ccc;">ATAU</div>
+          <button class="secondary" data-nav="emailLogin">Masuk dengan E-mel</button>
         </div>
       </section>
 
@@ -196,24 +208,8 @@
       <section id="emailLogin" class="screen">
         <div class="login-card"><h2>Log Masuk</h2><input type="email" id="loginEmail" placeholder="E-mel"><input type="password" id="loginPass" placeholder="Kata Laluan"><button class="primary" onclick="window.handleEmailLogin()">Masuk</button><button class="secondary" data-nav="login">Kembali</button></div>
       </section>
-      
-      <!-- NEW SIGNUP FORM -->
       <section id="emailSignup" class="screen">
-        <div class="login-card">
-          <h2>Daftar Baru</h2>
-          <label class="inp-label">Nama Penuh</label><input type="text" id="signupName" placeholder="Ahmad Albab" />
-          <label class="inp-label">Username</label><input type="text" id="signupUsername" placeholder="ahmad_fit" />
-          <label class="inp-label">E-mel</label><input type="email" id="signupEmail" placeholder="nama@contoh.com" />
-          <label class="inp-label">Pekerjaan</label><input type="text" id="signupJob" placeholder="Pelajar" />
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-              <div><label class="inp-label">Umur</label><input type="number" id="signupAge" placeholder="25" /></div>
-              <div><label class="inp-label">Berat Semasa</label><input type="number" id="signupWeight" placeholder="70 kg" step="0.1" /></div>
-          </div>
-          <label class="inp-label">Berat Matlamat (kg)</label><input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
-          <label class="inp-label">Kata Laluan</label><input type="password" id="signupPass" placeholder="********" />
-          <button class="primary" onclick="window.handleEmailSignup()">Daftar Sekarang</button>
-          <button class="secondary" data-nav="login">Kembali</button>
-        </div>
+        <div class="login-card"><h2>Daftar Baru</h2><input type="text" id="signupName" placeholder="Nama"><input type="email" id="signupEmail" placeholder="E-mel"><input type="password" id="signupPass" placeholder="Kata Laluan"><button class="primary" onclick="window.handleEmailSignup()">Daftar</button><button class="secondary" data-nav="login">Kembali</button></div>
       </section>
 
       <!-- Home -->
@@ -228,13 +224,13 @@
         <div id="recentMealsList"></div>
       </section>
 
-      <!-- Diary -->
+      <!-- Diary (UPDATED LAYOUT) -->
       <section id="analysis" class="screen">
         <h3>Diari Makanan</h3>
         <div id="mealsContainer" style="margin-top:20px; padding-bottom:80px;"></div>
       </section>
 
-      <!-- Weight -->
+      <!-- Weight (UPDATED WITH CALENDAR) -->
       <section id="weight" class="screen">
         <div class="login-card" style="margin-top:0;">
             <h3>Kemas Kini Berat</h3>
@@ -243,22 +239,28 @@
             <input type="date" id="inpDate">
             <button class="primary" id="btnSaveWeight">Simpan</button>
         </div>
+        
+        <!-- Calendar -->
         <h4>Kalendar Berat</h4>
-        <div class="calendar-wrapper"><div class="calendar-grid" id="weightCalendar"></div></div>
+        <div class="calendar-wrapper">
+             <div class="calendar-grid" id="weightCalendar">
+                 <!-- JS will populate this -->
+             </div>
+        </div>
+
         <h4>Sejarah</h4>
         <div id="weightHistory" style="padding-bottom:80px;"></div>
       </section>
 
-      <!-- Upload -->
+      <!-- Upload (GEMINI + KALORI) -->
       <section id="upload" class="screen">
         <div class="login-card">
           <h2>AI Food Scan</h2>
           <div class="upload-box">
-             <img id="uploadPreview" class="preview-img hidden" src="" alt="Preview">
+             <img id="uploadPreview" class="preview-img hidden" src="">
              <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span style="margin-top:10px;font-weight:bold;color:#377CFF;">AI sedang berfikir...</span></div>
              <div id="uploadPlaceholder" style="font-size:40px; color:#ccc;">📸</div>
           </div>
-          <p style="color:var(--muted);">1. Ambil Gambar<br>2. Gemini Kesan Nama<br>3. Kalori.my Bagi Data</p>
           <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
           <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
           <button class="primary" onclick="document.getElementById('cameraInput').click()">📸 Kamera</button>
@@ -290,7 +292,7 @@
   <script type="module">
     // --- IMPORT FIREBASE ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // --- KEYS (User Provided) ---
