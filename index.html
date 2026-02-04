@@ -403,59 +403,15 @@
             window.subscribeToData(user.uid);
         }
 
+        // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
         setTimeout(() => {
-  document.getElementById('aiLoading').classList.add('hidden');
-
-  // 🇲🇾 Malaysian Food Database
-  const malaysianFoods = [
-    { name:"Nasi Lemak", calories:450, protein:12, carbs:60, keywords:["nasi","lemak"] },
-    { name:"Nasi Kandar", calories:650, protein:28, carbs:75, keywords:["kandar","curry"] },
-    { name:"Mee Goreng", calories:520, protein:18, carbs:68, keywords:["mee","noodle"] },
-    { name:"Char Kuey Teow", calories:700, protein:22, carbs:80, keywords:["char","teow"] },
-    { name:"Roti Canai", calories:300, protein:8, carbs:40, keywords:["roti"] },
-    { name:"Ayam Goreng", calories:420, protein:35, carbs:10, keywords:["ayam","chicken"] },
-    { name:"Rendang", calories:500, protein:30, carbs:15, keywords:["rendang"] },
-    { name:"Satay", calories:350, protein:25, carbs:15, keywords:["satay"] },
-    { name:"Laksa", calories:480, protein:20, carbs:55, keywords:["laksa"] },
-    { name:"Nasi Goreng", calories:550, protein:20, carbs:70, keywords:["goreng","fried"] }
-  ];
-
-  const fileName = input.files[0].name.toLowerCase();
-
-  // Try keyword detection
-  let detectedFood = malaysianFoods.find(food =>
-      food.keywords.some(k => fileName.includes(k))
-  );
-
-  // If nothing matched → random realistic dish
-  if(!detectedFood){
-      detectedFood = malaysianFoods[Math.floor(Math.random()*malaysianFoods.length)];
-  }
-
-  const data = {
-    name: detectedFood.name,
-    calories: detectedFood.calories,
-    protein: detectedFood.protein,
-    carbs: detectedFood.carbs,
-    date: getTodayDate(),
-    image: imageBase64
-  };
-
-  if(confirm(`AI Detect: ${data.name} (${data.calories} kcal)\nSimpan ke diari?`)) {
-
-    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-    } else {
-        mealLogs.push(data);
-        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-    }
-
-    renderHomeStats();
-    showScreen('home');
-  }
-
-}, 1200);
-
+            if (!localStorage.getItem('userGoal')) {
+                showScreen('onboarding');
+            } else {
+                console.log("Redirecting to Home...");
+                showScreen('home');
+            }
+        }, 500); 
     }
 
     window.handleLogoutSuccess = () => {
@@ -894,4 +850,3 @@
   </script>
 </body>
 </html>
-
