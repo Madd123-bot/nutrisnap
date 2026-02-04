@@ -1,910 +1,359 @@
 <!doctype html>
 <html lang="ms">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>NutriSnap</title>
-  
-  <style>
-    /* --- CSS UTAMA --- */
-    :root {
-      --bg: #f0f7ff;
-      --card: #ffffff;
-      --primary: #377CFF;
-      --primary-gradient: linear-gradient(135deg, #377CFF 0%, #00C6FF 100%);
-      --soft: #eef6ff;
-      --muted: #8898aa;
-      --accent: #2dce89;
-      --accent-gradient: linear-gradient(135deg, #2dce89 0%, #2dcecc 100%);
-      --danger: #f5365c;
-      --facebook: #1877F2;
-      --radius: 16px; 
-      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>NutriSnap PRO</title>
 
-    * { box-sizing: border-box; }
-    
-    html, body { 
-        height: 100%; margin: 0; background-color: var(--bg);
-        background-image: url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='24' opacity='0.2'%3E🍎%3C/text%3E%3Ctext x='60' y='40' font-size='24' opacity='0.2'%3E🥕%3C/text%3E%3Ctext x='30' y='90' font-size='24' opacity='0.2'%3E🥦%3C/text%3E%3Ctext x='90' y='80' font-size='24' opacity='0.2'%3E🍌%3C/text%3E%3Ctext x='110' y='30' font-size='24' opacity='0.2'%3E🍅%3C/text%3E%3Ctext x='10' y='120' font-size='24' opacity='0.2'%3E🌽%3C/text%3E%3C/svg%3E");
-        color: #32325d; -webkit-font-smoothing: antialiased;
-    }
+<style>
+:root{
+ --bg:#f0f7ff;
+ --card:#ffffff;
+ --primary:#377CFF;
+ --primary-gradient:linear-gradient(135deg,#377CFF,#00C6FF);
+ --accent-gradient:linear-gradient(135deg,#2dce89,#2dcecc);
+ --radius:16px;
+ font-family:Inter,Segoe UI,Roboto;
+}
 
-    .hidden { display: none !important; }
-    
-    #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+body{margin:0;background:var(--bg);}
+.hidden{display:none!important;}
+.screen{display:none}
+.screen.active{display:block}
 
-    /* Topbar */
-    .topbar {
-        height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
-        padding: 0 18px; background: var(--primary-gradient); box-shadow: 0 4px 6px rgba(50,50,93,0.11); z-index: 100; color: white;
-    }
-    .brand { font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
-    .user-icon {
-        width: 38px; height: 38px; background: rgba(255, 255, 255, 0.2); 
-        color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-weight: 600; cursor: pointer; overflow: hidden;
-    }
-    .user-icon img { width: 100%; height: 100%; object-fit: cover; }
+.login-card,.stat-card,.list-item{
+ backdrop-filter:blur(10px);
+ background:rgba(255,255,255,.8);
+ border-radius:16px;
+ padding:15px;
+ margin-bottom:12px;
+}
 
-    /* Screens */
-    .screens { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; position: relative; }
-    .screen { display: none; animation: fadeIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
-    .screen.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.trend-down{color:#2dce89;background:#e6fffa;padding:2px 8px;border-radius:12px;font-size:12px}
+.trend-up{color:#f5365c;background:#fff5f5;padding:2px 8px;border-radius:12px;font-size:12px}
+.trend-same{color:#fbbf24;background:#fffbeb;padding:2px 8px;border-radius:12px;font-size:12px}
 
-    /* Login Card */
-    .login-card {
-        background: rgba(255, 255, 255, 0.98); padding: 30px 20px; border-radius: var(--radius);
-        box-shadow: 0 10px 25px rgba(50,50,93,0.15); text-align: center; max-width: 400px; margin: 40px auto;
-    }
-    .login-card h1 { margin-top: 0; color: var(--primary); font-size: 26px; }
-    
-    /* Inputs & Buttons */
-    input, select {
-        width: 100%; padding: 14px; margin-bottom: 15px; border: 1px solid #e0e6ed;
-        background: #fbfdff; border-radius: 10px; font-size: 16px; outline: none;
-    }
-    button {
-        width: 100%; padding: 14px; border: none; border-radius: 10px;
-        font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 12px;
-        transition: transform 0.1s;
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-    }
-    button:active { transform: scale(0.97); }
-    .primary { background: var(--primary-gradient); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
-    .secondary { background: var(--soft); color: var(--primary); }
-    .fb-btn { background: var(--facebook); color: white; box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11); }
-    .accent-btn { background: var(--accent-gradient); color: white; }
-    .danger-btn { background: #fff0f3; color: var(--danger); }
-    
-    .divider { margin: 25px 0; color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+.stat-val{font-size:22px;font-weight:800}
+.stat-label{font-size:11px;color:#888}
 
-    /* Status Message */
-    .status-text {
-        font-size: 13px; color: var(--primary); font-weight: 600; margin-top: 10px; min-height: 20px;
-    }
-
-    /* Stats & Lists */
-    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 25px; }
-    .stat-card {
-        background: var(--card); padding: 15px; border-radius: var(--radius);
-        box-shadow: 0 4px 12px rgba(50,50,93,0.1); text-align: center; position: relative; overflow: hidden;
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-    }
-    .stat-card.full-width { grid-column: span 2; background: linear-gradient(to right bottom, #ffffff, #f8fbff); }
-    .stat-card::after { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--primary-gradient); }
-    .stat-val { font-size: 24px; font-weight: 800; color: #32325d; }
-    .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
-
-    .list-item {
-        background: var(--card); padding: 16px; border-radius: 12px; margin-bottom: 12px;
-        display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    .item-val { font-weight: 700; font-size: 16px; color: #32325d; display: flex; align-items: center; gap: 10px; }
-    
-    /* Weight Indicators */
-    .trend-down { color: #2dce89; background: #e6fffa; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-    .trend-up { color: #f5365c; background: #fff5f5; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-    .trend-same { color: #fbbf24; background: #fffbeb; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
-
-    /* Nav */
-    .fab-btn {
-        position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-        width: 60px; height: 60px; border-radius: 50%; background: var(--accent-gradient); color: white;
-        border: none; box-shadow: 0 10px 20px rgba(45, 206, 137, 0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .bottombar {
-        position: fixed; bottom: 0; left: 0; right: 0; height: 75px; 
-        background: rgba(255, 255, 255, 0.98);
-        display: flex; justify-content: space-between; align-items: center; padding: 0 15px; 
-        box-shadow: 0 -5px 20px rgba(0,0,0,0.04); z-index: 900;
-    }
-    
-    .nav-btn {
-        flex: 1; 
-        background: none; 
-        border: none; 
-        padding: 8px; 
-        display: flex; 
-        flex-direction: column;
-        align-items: center; 
-        justify-content: center; 
-        color: #adb5bd; 
-        font-size: 11px; 
-        font-weight: 600; 
-        gap: 5px;
-        margin: 0 5px;
-        border-radius: 16px; 
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
-    }
-    
-    .nav-btn.active { 
-        color: var(--primary); 
-        background-color: rgba(55, 124, 255, 0.15); 
-        transform: translateY(-2px); 
-    }
-    
-    .nav-btn svg { width: 24px; height: 24px; fill: currentColor; }
-    .nav-spacer { width: 70px; } 
-
-    /* Upload UI */
-    .upload-box { background:#f6f9fc; height:200px; border-radius:10px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; color:#cbd5e0; border:2px dashed #e2e8f0; position:relative; overflow:hidden; }
-    .preview-img { width: 100%; height: 100%; object-fit: cover; position: absolute; }
-    
-    /* NEW: Food Image in Diary */
-    .meal-img-thumb {
-        width: 50px; height: 50px; border-radius: 8px; object-fit: cover; margin-right: 12px;
-        background: #eee;
-    }
-    .meal-row-content { display: flex; align-items: center; width: 100%; }
-    .meal-info { flex: 1; }
-  </style>
+button{padding:10px;border:none;border-radius:10px;background:var(--primary-gradient);color:#fff}
+input{padding:10px;width:100%;margin-bottom:10px}
+</style>
 </head>
+
 <body>
 
-  <div id="app">
-    <header class="topbar">
-      <div class="brand">NutriSnap</div>
-      <div id="userIcon" class="user-icon hidden" data-nav="profile">A</div>
-    </header>
+<div id="app">
 
-    <!-- Main Screens -->
-    <main class="screens">
-      
-      <!-- 1. LOGIN SCREEN -->
-      <section id="login" class="screen active">
-        <div class="login-card">
-          <h1>Selamat Datang</h1>
-          <p style="color:#8898aa;">Sila log masuk untuk menyimpan data.</p>
-          
-          <button id="googleBtn" class="primary" onclick="window.handleGoogleLogin()">
-             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
-             Masuk dengan Google
-          </button>
+<section id="login" class="screen active">
+<div class="login-card">
+<h2>NutriSnap</h2>
+<button onclick="forceOfflineLogin()">Masuk (Offline Demo)</button>
+</div>
+</section>
 
-          <button id="fbBtn" class="fb-btn" onclick="window.handleFacebookLogin()">
-             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
-             Masuk dengan Facebook
-          </button>
-          
-          <div id="loginStatus" class="status-text"></div>
+<section id="onboarding" class="screen">
+<div class="login-card">
+<h3>Pilih Matlamat</h3>
+<input type="number" id="onboardGoalWeight" placeholder="Goal Weight">
+<select id="goalType">
+<option value="lose">Turun Berat</option>
+<option value="gain">Naik Berat</option>
+</select>
+<button onclick="saveOnboarding()">Simpan</button>
+</div>
+</section>
 
-          <div class="divider">ATAU</div>
-          
-          <button class="secondary" data-nav="emailLogin">Log Masuk dengan Akaun</button>
-          
-          <div class="login-hint" style="margin-top:15px; font-size:14px; color:#888;">
-            <p>Tiada akaun? <a href="#" style="color:var(--primary); text-decoration:none; font-weight:700;" data-nav="emailSignup">Daftar sekarang</a></p>
-          </div>
+<section id="home" class="screen">
+<h3>Kalori Hari Ini</h3>
+<div class="stat-card">
+<div id="calBalance" class="stat-val">0</div>
+<div class="stat-label">Kalori</div>
 
-          <!-- DEV BYPASS BUTTON -->
-          <div style="margin-top:20px; border-top:1px dashed #eee; padding-top:10px;">
-            <button style="background:transparent; color:#bbb; border:1px dashed #ccc; font-size:12px; cursor:pointer;" onclick="window.forceOfflineLogin()">
-              🛠️ [Pintas] Masuk Tanpa Login
-            </button>
-          </div>
-        </div>
-      </section>
+<div style="margin-top:10px;">
+<div style="background:#eee;height:10px;border-radius:10px;overflow:hidden;">
+<div id="calProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#377CFF,#2dce89);transition:.5s"></div>
+</div>
+</div>
+</div>
 
-      <!-- 2. EMAIL LOGIN -->
-      <section id="emailLogin" class="screen">
-        <div class="login-card">
-          <h2>Log Masuk</h2>
-          <input type="email" placeholder="E-mel" id="loginEmail" />
-          <input type="password" placeholder="Kata Laluan" id="loginPass" />
-          <button class="primary" onclick="window.handleEmailLogin()">Masuk</button>
-          <button class="secondary" data-nav="login">Kembali</button>
-        </div>
-      </section>
+<button onclick="showScreen('upload')">Snap Makanan</button>
+<button onclick="showScreen('weight')">Berat</button>
+</section>
 
-      <!-- 3. EMAIL SIGNUP (UPDATED FORM) -->
-      <section id="emailSignup" class="screen">
-        <div class="login-card">
-          <h2>Daftar Baru</h2>
-          
-          <label class="inp-label">Nama Penuh</label>
-          <input type="text" id="signupName" placeholder="Ahmad Albab" />
+<section id="upload" class="screen">
+<div class="login-card">
+<input type="file" accept="image/*" onchange="handleImageUpload(this)">
+</div>
+</section>
 
-          <label class="inp-label">Nama Pengguna (Username)</label>
-          <input type="text" id="signupUsername" placeholder="ahmad_fit" />
-          
-          <label class="inp-label">E-mel</label>
-          <input type="email" id="signupEmail" placeholder="nama@contoh.com" />
-          
-          <label class="inp-label">Pekerjaan</label>
-          <input type="text" id="signupJob" placeholder="Pelajar" />
+<section id="weight" class="screen">
+<div id="streakBox" class="stat-card"></div>
+<input type="number" id="inpWeight" placeholder="Berat kg">
+<button onclick="saveWeight()">Simpan Berat</button>
+<canvas id="weightChart" height="150"></canvas>
+<div id="weightHistory"></div>
+<button onclick="showScreen('home')">Back</button>
+</section>
 
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-              <div>
-                  <label class="inp-label">Umur</label>
-                  <input type="number" id="signupAge" placeholder="25" />
-              </div>
-              <div>
-                  <label class="inp-label">Berat Semasa</label>
-                  <input type="number" id="signupWeight" placeholder="70 kg" step="0.1" />
-              </div>
-          </div>
+</div>
 
-          <label class="inp-label">Berat Matlamat (kg)</label>
-          <input type="number" id="signupGoal" placeholder="60.0" step="0.1" />
-          
-          <label class="inp-label">Kata Laluan</label>
-          <input type="password" id="signupPass" placeholder="********" />
-          
-          <button class="primary" onclick="window.handleEmailSignup()">Daftar Sekarang</button>
-          <button class="secondary" data-nav="login">Kembali</button>
-        </div>
-      </section>
+<script>
 
-      <!-- ONBOARDING SCREEN -->
-      <section id="onboarding" class="screen">
-        <div class="login-card">
-            <h2>Matlamat Anda</h2>
-            <p style="margin-bottom:20px; color:var(--muted); font-size:14px;">Bantu kami peribadikan pengalaman anda.</p>
-            <label class="inp-label" style="display:block; text-align:left; margin-bottom:5px;">Berat Semasa (kg)</label>
-            <input type="number" id="onboardStartWeight" placeholder="Contoh: 75.0" step="0.1">
-            <label class="inp-label" style="display:block; text-align:left; margin-bottom:5px;">Berat Matlamat (kg)</label>
-            <input type="number" id="onboardGoalWeight" placeholder="Contoh: 65.0" step="0.1">
-            <button class="primary" onclick="saveOnboarding()">Simpan & Teruskan</button>
-        </div>
-      </section>
+// ================= STATE =================
+let currentUser=null;
+let mealLogs=[];
+let weightLogs=[];
 
-      <!-- 4. HOME DASHBOARD -->
-      <section id="home" class="screen">
-        <h3>Ringkasan Hari Ini</h3>
-        <div class="stats-grid">
-            <div class="stat-card full-width"><div class="stat-val" id="calBalance">0</div><div class="stat-label">Kalori (kcal)</div></div>
-            <div class="stat-card carb"><div class="stat-val" id="carbBalance">0</div><div class="stat-label">Karbo (g)</div></div>
-            <div class="stat-card prot"><div class="stat-val" id="protBalance">0</div><div class="stat-label">Protein (g)</div></div>
-        </div>
-        <h3>Log Makanan Terkini</h3>
-        <div id="recentMealsList" class="history-list"><div class="list-item" style="justify-content:center; color:var(--muted);">Tiada rekod hari ini</div></div>
-      </section>
+// ================= NAV =================
+function showScreen(id){
+ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ if(id==="home")renderHomeStats();
+ if(id==="weight")renderWeightLogs();
+}
 
-      <!-- 5. UPLOAD / CAMERA -->
-      <section id="upload" class="screen">
-        <div class="login-card">
-          <h2>Analisis Makanan</h2>
-          <div class="upload-box">
-             <img id="uploadPreview" class="preview-img hidden" src="" alt="Preview">
-             <div id="aiLoading" class="loading-overlay hidden"><div class="spinner"></div><span>Menganalisis AI...</span></div>
-             <div id="uploadPlaceholder">
-                <svg width="80" height="80" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
-             </div>
-          </div>
-          <p style="color:var(--muted);">Ambil gambar makanan untuk analisis AI.</p>
-          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
-          <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
-          <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
-          <button class="secondary" onclick="triggerGallery()">📁 Pilih dari Galeri</button>
-          <button class="secondary" onclick="resetUpload()">Batal</button>
-        </div>
-      </section>
+// ================= LOGIN =================
+function forceOfflineLogin(){
+ currentUser={uid:"offline"};
+ calculateCalorieTarget();
+ if(!localStorage.getItem('userGoal')) showScreen('onboarding');
+ else showScreen('home');
+}
 
-      <!-- 6. ANALYSIS -->
-      <section id="analysis" class="screen">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h3>Diari Makanan</h3>
-          <select id="metricToggle" style="width:auto; margin:0; padding:8px; border-color:var(--primary); color:var(--primary); font-weight:600;">
-            <option value="calories">Kalori</option><option value="protein">Protein</option><option value="carbs">Karbohidrat</option>
-          </select>
-        </div>
-        <div id="mealsContainer" style="margin-top:20px;"></div>
-      </section>
+// ================= ONBOARD =================
+function saveOnboarding(){
+ const goal=document.getElementById('onboardGoalWeight').value;
+ const type=document.getElementById('goalType').value;
+ localStorage.setItem('userGoal',goal);
+ localStorage.setItem('goalType',type);
+ calculateCalorieTarget();
+ showScreen('home');
+}
 
-      <!-- 7. WEIGHT -->
-      <section id="weight" class="screen">
-        <div class="login-card" style="margin-top:0;">
-            <h3>Rekod Berat Badan</h3>
-            <input type="number" id="inpWeight" placeholder="Berat (kg)" step="0.1" />
-            <input type="date" id="inpDate" />
-            <button class="primary" id="btnSaveWeight">Simpan Rekod</button>
-        </div>
-        <h4>Sejarah Berat</h4>
-        <div id="weightHistory" class="history-list"></div>
-      </section>
+// ================= AI MEMORY =================
+function updateFoodMemory(foodName){
+ let mem=JSON.parse(localStorage.getItem('aiFoodMemory')||"{}");
+ mem[foodName]=(mem[foodName]||0)+1;
+ localStorage.setItem('aiFoodMemory',JSON.stringify(mem));
+}
 
-      <!-- 8. PROFILE -->
-      <section id="profile" class="screen">
-        <div class="login-card">
-            <div class="user-icon" style="width:80px; height:80px; font-size:32px; margin:0 auto 20px; background:var(--primary-gradient); box-shadow:0 10px 20px rgba(55, 124, 255, 0.3);">A</div>
-            <h3 id="profileName">Pengguna</h3>
-            <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
-            <button class="secondary" style="margin-top:20px;">Edit Profil</button>
-            <div class="divider">ZON BAHAYA</div>
-            <button class="danger-btn" onclick="resetApp()">Padam Semua Data (Reset)</button>
-            <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
-        </div>
-      </section>
+function getSmartFoodPick(list){
+ const mem=JSON.parse(localStorage.getItem('aiFoodMemory')||"{}");
+ const weighted=[];
+ list.forEach(f=>{
+  const w=(mem[f.name]||1);
+  for(let i=0;i<w;i++) weighted.push(f);
+ });
+ return weighted[Math.floor(Math.random()*weighted.length)];
+}
 
-    </main>
-    
-    <button id="fabBtn" class="fab-btn hidden" data-nav="upload">
-      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 4a6 6 0 1 1 12 0 6 6 0 0 1-12 0zM9 2l-1.83 2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2.17L15 2H9z"/></svg>
-    </button>
+// ================= FAKE AI =================
+function fakeAIDetectFood(){
 
-    <nav class="bottombar hidden" id="mainNav">
-      <button class="nav-btn active" data-nav="home"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"/></svg><span>Utama</span></button>
-      <button class="nav-btn" data-nav="analysis"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg><span>Diari</span></button>
-      <div class="nav-spacer"></div>
-      <button class="nav-btn" data-nav="weight"><svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9s9-4.03 9-9s-4.03-9-9-9zm-1.5 3h3V9h-3V6zm0 10.5V12h3v4.5h-3z"/></svg><span>Berat</span></button>
-      <button class="nav-btn" data-nav="profile"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span>Profil</span></button>
-    </nav>
-  </div>
+ const foods=[
+ {name:"Nasi Lemak",cal:500,protein:15,carbs:65},
+ {name:"Mee Goreng",cal:600,protein:18,carbs:85},
+ {name:"Ayam Goreng",cal:300,protein:28,carbs:10},
+ {name:"Burger",cal:550,protein:25,carbs:50},
+ {name:"Salad Ayam",cal:250,protein:30,carbs:15},
+ {name:"Sandwich",cal:320,protein:14,carbs:35}
+ ];
 
-  <!-- SINGLE LOGIC SCRIPT -->
-  <script>
-    // --- 1. UI HELPERS ---
-    function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
-        const isAuth = ['login', 'emailLogin', 'emailSignup', 'onboarding'].includes(id);
-        const hideNav = isAuth; 
+ const portions=[
+ {label:"Small",mult:0.7},
+ {label:"Medium",mult:1},
+ {label:"Large",mult:1.3}
+ ];
 
-        const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
-        els.forEach(el => el.classList.toggle('hidden', hideNav));
-        
-        // Handle Nav State
-        document.querySelectorAll('.nav-btn').forEach(b => {
-             b.classList.toggle('active', b.getAttribute('data-nav') === id);
-        });
-        
-        if(id === 'home') renderHomeStats();
-        if(id === 'weight') renderWeightLogs();
-        if(id === 'analysis') renderMeals();
-    }
-    document.querySelectorAll('[data-nav]').forEach(el => {
-        el.addEventListener('click', (e) => { e.preventDefault(); showScreen(el.dataset.nav); });
-    });
+ const food=getSmartFoodPick(foods);
+ const portion=portions[Math.floor(Math.random()*portions.length)];
+ const confidence=Math.floor(Math.random()*20)+80;
 
-    // --- 2. GLOBAL STATE ---
-    let currentUser = null, mealLogs = [], weightLogs = [];
-    let activeMealMetric = 'calories';
-    const API_KEY = ""; 
+ return{
+  name:food.name,
+  portion:portion.label,
+  confidence:confidence,
+  calories:Math.round(food.cal*portion.mult),
+  protein:Math.round(food.protein*portion.mult),
+  carbs:Math.round(food.carbs*portion.mult)
+ };
+}
 
-    // --- 3. LOGIN SUCCESS HANDLER ---
-    window.handleLoginSuccess = (user) => {
-        currentUser = user;
-        console.log("LOGIN SUCCESS:", user.email);
-        
-        const statusEl = document.getElementById('loginStatus');
-        if(statusEl) statusEl.innerText = "Berjaya! Mengalih...";
+// ================= IMAGE AI =================
+function handleImageUpload(input){
 
-        document.getElementById('profileName').innerText = user.displayName || "Pengguna";
-        document.getElementById('profileEmail').innerText = user.email;
-        if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
-        else document.getElementById('userIcon').innerText = (user.displayName || "A").charAt(0).toUpperCase();
+ const reader=new FileReader();
 
-        // Load Data (Hybrid)
-        if (user.uid.startsWith('offline_')) {
-            mealLogs = JSON.parse(localStorage.getItem('mealLogs') || '[]');
-            weightLogs = JSON.parse(localStorage.getItem('weightLogs') || '[]');
-        } else if (window.subscribeToData) {
-            window.subscribeToData(user.uid);
-        }
+ reader.onload=function(e){
 
-        // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
-        setTimeout(() => {
-            if (!localStorage.getItem('userGoal')) {
-                showScreen('onboarding');
-            } else {
-                console.log("Redirecting to Home...");
-                showScreen('home');
-            }
-        }, 500); 
-    }
+ const ai=fakeAIDetectFood();
 
-    window.handleLogoutSuccess = () => {
-        currentUser = null;
-        if(window.unsubscribeMeals) window.unsubscribeMeals();
-        if(window.unsubscribeWeight) window.unsubscribeWeight();
-        showScreen('login');
-    }
+ let badge=ai.confidence>90?"🟢 Tinggi":"🟡 Sederhana";
 
-    window.forceOfflineLogin = (provider = "Offline") => {
-        const mockUser = { 
-            uid: "offline_user_" + Date.now(), 
-            displayName: "Pengguna " + provider, 
-            email: provider.toLowerCase() + "@nutrisnap.com", 
-            photoURL: null 
-        };
-        localStorage.setItem('currentUser', JSON.stringify(mockUser));
-        localStorage.setItem('isLoggedIn', 'true');
-        window.handleLoginSuccess(mockUser);
-    }
+ if(confirm(
+`AI Detect: ${ai.name}
+Portion: ${ai.portion}
+Confidence: ${ai.confidence}% (${badge})
 
-    // Auto-Login Check (Local)
-    window.addEventListener('load', () => {
-        if(localStorage.getItem('isLoggedIn') === 'true') {
-            const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            window.handleLoginSuccess(u);
-        }
-    });
+${ai.calories} kcal • ${ai.protein}g protein • ${ai.carbs}g carbs
 
-    // --- 4. DATA LOGIC ---
-    function renderHomeStats() {
-        const today = getTodayDate();
-        const logs = mealLogs.filter(l => l.date === today);
-        const sum = (k) => logs.reduce((a, b) => a + (b[k]||0), 0);
-        document.getElementById('calBalance').innerText = sum('calories');
-        document.getElementById('protBalance').innerText = sum('protein');
-        document.getElementById('carbBalance').innerText = sum('carbs');
-        
-        const list = document.getElementById('recentMealsList');
-        list.innerHTML = logs.length ? '' : `<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>`;
-        logs.forEach(m => list.innerHTML += `<div class="list-item"><div class="item-val">${m.name}</div><div class="item-date">${m.calories} kcal</div></div>`);
-    }
+Simpan?`)){
 
-    function renderWeightLogs() { 
-        // Sort logs by date descending
-        const logs = weightLogs.sort((a,b) => new Date(b.date) - new Date(a.date));
-        const container = document.getElementById('weightHistory');
-        
-        if (logs.length === 0) {
-            container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Tiada rekod.</div>';
-            return;
-        }
+  updateFoodMemory(ai.name);
 
-        let html = '';
-        logs.forEach((log, index) => {
-            // Get previous log (which is next in the sorted array, or null if this is the oldest)
-            const prevLog = logs[index + 1];
-            
-            let trendHtml = '';
-            if (prevLog) {
-                const diff = log.weight - prevLog.weight;
-                if (diff < 0) {
-                    trendHtml = `<span class="trend-down">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
-                } else if (diff > 0) {
-                    trendHtml = `<span class="trend-up">▲ ${diff.toFixed(1)}kg</span>`;
-                } else {
-                    trendHtml = `<span class="trend-same">—</span>`;
-                }
-            } else {
-                trendHtml = `<span style="color:#ccc; font-size:12px;">Mula</span>`;
-            }
+  mealLogs.push({...ai,date:getTodayDate(),image:e.target.result});
+  localStorage.setItem('mealLogs',JSON.stringify(mealLogs));
+  showScreen('home');
+ }
+ }
 
-            html += `
-                <div class="list-item">
-                    <div class="item-date">${log.date}</div>
-                    <div class="item-val">${log.weight} kg ${trendHtml}</div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-    }
+ reader.readAsDataURL(input.files[0]);
+}
 
-    function renderMeals() { 
-        const container = document.getElementById('mealsContainer');
-        container.innerHTML = '';
-        const grouped = {};
-        mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
-        
-        Object.keys(grouped).sort().reverse().forEach(date => {
-             let html = `<div class="meal-day"><h4>${date}</h4>`;
-             grouped[date].forEach(i => {
-                 // Check if image exists
-                 let imgHtml = '';
-                 if (i.image) {
-                     imgHtml = `<img src="${i.image}" class="meal-img-thumb" alt="food">`;
-                 }
-                 
-                 html += `
-                 <div class="list-item">
-                    <div class="meal-row-content">
-                        ${imgHtml}
-                        <div class="meal-info">
-                            <div style="font-weight:700">${i.name}</div>
-                            <div style="font-size:12px; color:#888;">
-                                ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
-                            </div>
-                        </div>
-                    </div>
-                 </div>`;
-             });
-             container.innerHTML += html + '</div>';
-        });
-    }
+// ================= CALORIE TARGET =================
+function calculateCalorieTarget(){
+ const goalType=localStorage.getItem('goalType')||"lose";
+ let base=2200;
+ if(goalType==="lose")base-=400;
+ else base+=400;
+ localStorage.setItem('calorieTarget',base);
+}
 
-    // --- 5. UTILS ---
-    window.saveOnboarding = () => {
-        const val = document.getElementById('onboardGoalWeight').value;
-        if(val) { localStorage.setItem('userGoal', val); showScreen('home'); }
-    };
-    window.triggerCamera = () => document.getElementById('cameraInput').click();
-    window.triggerGallery = () => document.getElementById('galleryInput').click();
-    
-    // UPDATED IMAGE UPLOAD HANDLER
-    window.handleImageUpload = (input) => { 
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Show preview
-                document.getElementById('uploadPreview').src = e.target.result;
-                document.getElementById('uploadPreview').classList.remove('hidden');
-                document.getElementById('uploadPlaceholder').classList.add('hidden');
-                document.getElementById('aiLoading').classList.remove('hidden');
-                
-                // Store base64 string
-                const imageBase64 = e.target.result;
-                
-                setTimeout(() => {
-  document.getElementById('aiLoading').classList.add('hidden');
+// ================= HOME =================
+function renderHomeStats(){
 
-  // 🇲🇾 Malaysian Food Database
-  const malaysianFoods = [
- { name:"Nasi Lemak", calories:450, protein:12, carbs:60, keywords:["nasi","lemak"] },
- { name:"Nasi Kandar", calories:650, protein:28, carbs:75, keywords:["kandar","curry"] },
- { name:"Nasi Goreng", calories:550, protein:20, carbs:70, keywords:["goreng","fried"] },
- { name:"Mee Goreng", calories:520, protein:18, carbs:68, keywords:["mee","noodle"] },
- { name:"Char Kuey Teow", calories:700, protein:22, carbs:80, keywords:["char","teow"] },
- { name:"Laksa Penang", calories:480, protein:20, carbs:55, keywords:["laksa"] },
- { name:"Mee Rebus", calories:500, protein:18, carbs:65, keywords:["rebus"] },
- { name:"Mee Soto", calories:460, protein:22, carbs:55, keywords:["soto"] },
- { name:"Roti Canai", calories:300, protein:8, carbs:40, keywords:["roti"] },
- { name:"Roti Telur", calories:380, protein:14, carbs:45, keywords:["roti","telur"] },
- { name:"Ayam Goreng", calories:420, protein:35, carbs:10, keywords:["ayam","chicken"] },
- { name:"Ayam Percik", calories:480, protein:32, carbs:15, keywords:["percik"] },
- { name:"Rendang Daging", calories:520, protein:30, carbs:15, keywords:["rendang"] },
- { name:"Satay Ayam", calories:350, protein:25, carbs:15, keywords:["satay"] },
- { name:"Satay Daging", calories:400, protein:28, carbs:12, keywords:["satay","beef"] },
- { name:"Nasi Kerabu", calories:500, protein:22, carbs:65, keywords:["kerabu"] },
- { name:"Nasi Dagang", calories:600, protein:25, carbs:70, keywords:["dagang"] },
- { name:"Nasi Tomato", calories:580, protein:20, carbs:75, keywords:["tomato"] },
- { name:"Nasi Briyani", calories:680, protein:30, carbs:80, keywords:["briyani","biryani"] },
- { name:"Nasi Hujan Panas", calories:620, protein:22, carbs:78, keywords:["hujan"] },
- { name:"Sup Kambing", calories:430, protein:35, carbs:10, keywords:["kambing","soup"] },
- { name:"Sup Ayam", calories:350, protein:28, carbs:12, keywords:["sup","ayam"] },
- { name:"Burger Ramly", calories:550, protein:25, carbs:50, keywords:["burger"] },
- { name:"Hot Dog Malaysia", calories:420, protein:15, carbs:40, keywords:["hotdog"] },
- { name:"Apam Balik", calories:320, protein:8, carbs:45, keywords:["apam"] },
- { name:"Kuih Seri Muka", calories:280, protein:5, carbs:40, keywords:["seri"] },
- { name:"Kuih Lapis", calories:250, protein:4, carbs:38, keywords:["lapis"] },
- { name:"Cendol", calories:300, protein:4, carbs:50, keywords:["cendol"] },
- { name:"Ais Kacang", calories:350, protein:6, carbs:55, keywords:["ais","ice"] },
- { name:"Teh Tarik", calories:180, protein:6, carbs:25, keywords:["teh"] },
- { name:"Kopi O", calories:50, protein:1, carbs:8, keywords:["kopi"] },
- { name:"Nasi Ayam", calories:600, protein:35, carbs:70, keywords:["nasi","ayam"] },
- { name:"Hainanese Chicken Rice", calories:620, protein:36, carbs:72, keywords:["chicken","rice"] },
- { name:"Claypot Chicken Rice", calories:650, protein:34, carbs:75, keywords:["claypot"] },
- { name:"Tom Yam", calories:300, protein:20, carbs:15, keywords:["tomyam","tom"] },
- { name:"Keropok Lekor", calories:280, protein:10, carbs:40, keywords:["keropok"] },
- { name:"Otak-Otak", calories:260, protein:14, carbs:20, keywords:["otak"] },
- { name:"Ikan Bakar", calories:420, protein:35, carbs:5, keywords:["ikan","fish"] },
- { name:"Sambal Udang", calories:480, protein:28, carbs:18, keywords:["udang","prawn"] }
-];
+ mealLogs=JSON.parse(localStorage.getItem('mealLogs')||"[]");
 
+ const today=getTodayDate();
+ const logs=mealLogs.filter(l=>l.date===today);
 
-  const fileName = input.files[0].name.toLowerCase();
+ const used=logs.reduce((a,b)=>a+(b.calories||0),0);
+ const target=parseInt(localStorage.getItem('calorieTarget')||2000);
 
-  // Try keyword detection
-  let detectedFood = malaysianFoods.find(food =>
-      food.keywords.some(k => fileName.includes(k))
-  );
+ document.getElementById('calBalance').innerText=`${used} / ${target}`;
 
-  // If nothing matched → random realistic dish
-  if(!detectedFood){
-      detectedFood = malaysianFoods[Math.floor(Math.random()*malaysianFoods.length)];
+ const percent=Math.min((used/target)*100,100);
+ document.getElementById('calProgressBar').style.width=percent+"%";
+}
+
+// ================= WEIGHT =================
+function saveWeight(){
+
+ const w=parseFloat(document.getElementById('inpWeight').value);
+ if(!w)return;
+
+ weightLogs=JSON.parse(localStorage.getItem('weightLogs')||"[]");
+ weightLogs.push({weight:w,date:getTodayDate()});
+ localStorage.setItem('weightLogs',JSON.stringify(weightLogs));
+
+ renderWeightLogs();
+}
+
+// ===== STREAK =====
+function calculateWeightStreak(){
+
+ if(weightLogs.length<2)return 1;
+
+ const logs=[...weightLogs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+ let streak=1;
+
+ for(let i=0;i<logs.length-1;i++){
+  const d1=new Date(logs[i].date);
+  const d2=new Date(logs[i+1].date);
+  const diff=(d1-d2)/(1000*60*60*24);
+  if(diff===1)streak++;
+  else break;
+ }
+
+ return streak;
+}
+
+// ===== GRAPH =====
+function drawWeightChart(){
+
+ const canvas=document.getElementById('weightChart');
+ const ctx=canvas.getContext('2d');
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ if(weightLogs.length<2)return;
+
+ const logs=[...weightLogs].sort((a,b)=>new Date(a.date)-new Date(b.date));
+ const weights=logs.map(l=>l.weight);
+
+ const max=Math.max(...weights);
+ const min=Math.min(...weights);
+
+ const padding=20;
+ const w=canvas.width;
+ const h=canvas.height;
+
+ ctx.beginPath();
+
+ logs.forEach((l,i)=>{
+  const x=padding+(i*(w-padding*2)/(logs.length-1));
+  const y=h-((l.weight-min)/(max-min||1))*(h-padding*2)-padding;
+  if(i===0)ctx.moveTo(x,y);
+  else ctx.lineTo(x,y);
+ });
+
+ ctx.lineWidth=3;
+ ctx.strokeStyle="#377CFF";
+ ctx.stroke();
+}
+
+// ===== RENDER WEIGHT =====
+function renderWeightLogs(){
+
+ weightLogs=JSON.parse(localStorage.getItem('weightLogs')||"[]");
+ const container=document.getElementById('weightHistory');
+
+ const logs=[...weightLogs].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+ let html="";
+
+ logs.forEach((log,index)=>{
+
+ const prevLog=logs[index+1];
+ let trendHtml="";
+ const goalType=localStorage.getItem('goalType')||"lose";
+
+ if(prevLog){
+  const diff=log.weight-prevLog.weight;
+
+  if(goalType==="lose"){
+   if(diff<0)trendHtml=`<span class="trend-down">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
+   else if(diff>0)trendHtml=`<span class="trend-up">▲ ${diff.toFixed(1)}kg</span>`;
+   else trendHtml=`<span class="trend-same">—</span>`;
+  }else{
+   if(diff>0)trendHtml=`<span class="trend-down">▲ ${diff.toFixed(1)}kg</span>`;
+   else if(diff<0)trendHtml=`<span class="trend-up">▼ ${Math.abs(diff).toFixed(1)}kg</span>`;
+   else trendHtml=`<span class="trend-same">—</span>`;
   }
+ }
 
-  const data = {
-    name: detectedFood.name,
-    calories: detectedFood.calories,
-    protein: detectedFood.protein,
-    carbs: detectedFood.carbs,
-    date: getTodayDate(),
-    image: imageBase64
-  };
+ html+=`<div class="list-item">
+ ${log.date} - ${log.weight}kg ${trendHtml}
+ </div>`;
+ });
 
-  if(confirm(`AI Detect: ${data.name} (${data.calories} kcal)\nSimpan ke diari?`)) {
+ container.innerHTML=html;
 
-    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-    } else {
-        mealLogs.push(data);
-        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-    }
+ const streak=calculateWeightStreak();
+ document.getElementById('streakBox').innerHTML=
+ `<div class="stat-val">🔥 ${streak}</div>
+ <div class="stat-label">Hari Berturut Log Berat</div>`;
 
-    renderHomeStats();
-    showScreen('home');
-  }
+ drawWeightChart();
+}
 
-}, 1200);
+// ================= UTILS =================
+function getTodayDate(){
+ const d=new Date();
+ return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split('T')[0];
+}
 
-            }
-            reader.readAsDataURL(input.files[0]);
-        }
-    };
-    
-    window.resetUpload = () => showScreen('home');
-    function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
-    document.getElementById('inpDate').value = getTodayDate();
-    document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
-    window.resetApp = async () => { 
-        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
-            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
-                // Cloud Deletion Logic
-                const uid = currentUser.uid;
-                const { deleteDoc, getDocs, doc } = window.fs_ops; // We need to export these from module
-                
-                try {
-                    // 1. Delete Meal Subcollection
-                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
-                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 2. Delete Weight Subcollection
-                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
-                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 3. Delete User Doc
-                    await deleteDoc(doc(db, "users", uid));
-                    
-                    alert("Akaun berjaya dipadam.");
-                    window.handleLogout();
-                } catch(e) {
-                    console.error(e);
-                    alert("Ralat memadam data: " + e.message);
-                }
-            } else {
-                // Local Deletion
-                localStorage.clear(); 
-                location.reload(); 
-            }
-        } 
-    };
-    
-    // Save Weight
-    window.saveWeight = () => {
-        const w = document.getElementById('inpWeight').value;
-        if (!w) return alert("Isi berat.");
-        const data = { weight: parseFloat(w), date: document.getElementById('inpDate').value };
-        
-        if (currentUser.uid.startsWith('offline_')) {
-            weightLogs.push(data);
-            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
-            renderWeightLogs();
-        } else if (window.fs) {
-            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), data);
-        }
-        document.getElementById('inpWeight').value = '';
-        alert("Disimpan!");
-    }
-    document.getElementById('btnSaveWeight').onclick = window.saveWeight;
-  </script>
-
-  <!-- FIREBASE MODULE (Runs Last) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, FacebookAuthProvider, onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, limit, setDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    // --- KEYS ANDA ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyC9hya7EGpzu9Qn-bcjcwVpgy-_K7NR47A",
-      authDomain: "nutrisnap-34c6b.firebaseapp.com",
-      projectId: "nutrisnap-34c6b",
-      storageBucket: "nutrisnap-34c6b.firebasestorage.app",
-      messagingSenderId: "427310632230",
-      appId: "1:427310632230:web:78e2943728aec2987ac5e7"
-    };
-
-    let app, auth, db;
-    let isFirebaseReady = false;
-
-    // --- INIT FIREBASE ---
-    try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
-        window.isFirebaseReady = true;
-        console.log("Firebase Connected");
-
-        // LISTENER UTAMA
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.handleLoginSuccess(user);
-            } else {
-                const offline = localStorage.getItem('isLoggedIn') === 'true';
-                if (!offline) window.handleLogoutSuccess();
-            }
-        });
-
-    } catch (e) {
-        console.error("Firebase Init Failed:", e);
-    }
-
-    // --- EXPORTS TO WINDOW ---
-    window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
-    window.fs = { query, orderBy, limit, onSnapshot, addDoc };
-    window.fs_ops = { deleteDoc, getDocs, doc }; // Export for delete logic
-    
-    // --- DATA SUBSCRIPTION ---
-    window.subscribeToData = (uid) => {
-        if (!window.isFirebaseReady) return;
-        
-        const mealsRef = collection(db, 'users', uid, 'meals');
-        const qMeals = query(mealsRef, orderBy('date', 'desc'), limit(50));
-        window.unsubscribeMeals = onSnapshot(qMeals, (snap) => {
-            const data = []; snap.forEach(d => data.push(d.data()));
-            if(window.updateDataBridge) window.updateDataBridge('meals', data);
-        });
-
-        const wRef = collection(db, 'users', uid, 'weights');
-        const qWeight = query(wRef, orderBy('date', 'desc'), limit(20));
-        window.unsubscribeWeight = onSnapshot(qWeight, (snap) => {
-            const data = []; snap.forEach(d => data.push(d.data()));
-            if(window.updateDataBridge) window.updateDataBridge('weights', data);
-        });
-    }
-
-    // --- LOGIN HANDLERS ---
-    window.handleGoogleLogin = async () => {
-        const btn = document.getElementById('googleBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi Google...";
-        stat.innerText = "Sila tunggu pop-up...";
-
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new GoogleAuthProvider());
-            
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-            
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Google'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.innerText = "Masuk dengan Google";
-                btn.disabled = false;
-                stat.innerText = "";
-            }
-        }
-    };
-
-    window.handleFacebookLogin = async () => {
-        const btn = document.getElementById('fbBtn');
-        const stat = document.getElementById('loginStatus');
-        btn.disabled = true;
-        btn.innerText = "Menghubungi FB...";
-        stat.innerText = "Sila tunggu pop-up...";
-        
-        try {
-            if (!window.isFirebaseReady) throw new Error("Firebase not ready");
-            const result = await signInWithPopup(auth, new FacebookAuthProvider());
-            stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
-        } catch (error) {
-            console.error("Login Error:", error);
-            if (error.code === 'auth/unauthorized-domain' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/operation-not-allowed') {
-                stat.innerText = "Domain Blocked. Entering Offline Mode...";
-                setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
-            } else {
-                alert("Ralat: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Masuk dengan Facebook";
-                stat.innerText = "";
-            }
-        }
-    };
-
-    window.handleEmailLogin = async () => { 
-        const email = document.getElementById('loginEmail').value;
-        const pass = document.getElementById('loginPass').value;
-        if(!email || !pass) return alert("Sila isi info");
-        
-        try {
-            const res = await signInWithEmailAndPassword(auth, email, pass);
-            window.handleLoginSuccess(res.user);
-        } catch(error) {
-             // Fallback
-            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
-            const u = users.find(x => x.email === email && x.pass === pass);
-            if(u) {
-                localStorage.setItem('currentUser', JSON.stringify(u));
-                localStorage.setItem('isLoggedIn', 'true');
-                window.handleLoginSuccess(u);
-            } else {
-                alert("Gagal: " + error.message);
-            }
-        }
-    };
-
-    // UPDATED SIGNUP HANDLER FOR NEW FIELDS
-    window.handleEmailSignup = async () => {
-        const name = document.getElementById('signupName').value;
-        const username = document.getElementById('signupUsername').value;
-        const email = document.getElementById('signupEmail').value;
-        const job = document.getElementById('signupJob').value;
-        const age = document.getElementById('signupAge').value;
-        const weight = document.getElementById('signupWeight').value;
-        const goal = document.getElementById('signupGoal').value;
-        const pass = document.getElementById('signupPass').value;
-
-        if(!name || !email || !pass) return alert("Sila isi info wajib.");
-        
-        try {
-            const res = await createUserWithEmailAndPassword(auth, email, pass);
-            await updateProfile(res.user, { displayName: name });
-            
-            // Save extra data to Firestore
-            if (window.isFirebaseReady) {
-                await setDoc(doc(db, "users", res.user.uid), {
-                    username, job, age, weight, goal, 
-                    email: email, 
-                    createdAt: new Date()
-                });
-                
-                // Add initial weight log
-                if (weight) {
-                    await addDoc(collection(db, "users", res.user.uid, "weights"), {
-                        weight: parseFloat(weight),
-                        date: new Date().toISOString().split('T')[0]
-                    });
-                }
-            }
-            
-            // Save goal locally to skip onboarding
-            if (goal) localStorage.setItem('userGoal', goal);
-
-            window.handleLoginSuccess(res.user);
-            
-        } catch(error) {
-            // Fallback
-            const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
-            users.push({uid: "sim_"+Date.now(), displayName: name, email, pass});
-            localStorage.setItem('simUsers', JSON.stringify(users));
-            alert("Didaftarkan secara Offline (Firebase Gagal). Sila Login.");
-            showScreen('emailLogin');
-        }
-    };
-    
-    window.handleLogout = async () => {
-        if (window.isFirebaseReady) await signOut(auth).catch(()=>{});
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('currentUser');
-        window.location.reload();
-    };
-  </script>
-
-  <!-- BRIDGE -->
-  <script>
-    window.updateDataBridge = (type, data) => {
-        if(type === 'meals') {
-            mealLogs = data;
-            renderHomeStats();
-            if(document.getElementById('analysis').classList.contains('active')) renderMeals();
-        }
-        if(type === 'weights') {
-            weightLogs = data;
-            if(document.getElementById('weight').classList.contains('active')) renderWeightLogs();
-        }
-    }
-  </script>
+</script>
 </body>
 </html>
