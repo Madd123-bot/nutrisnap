@@ -600,7 +600,7 @@
                     wSnap.forEach(async (d) => await deleteDoc(d.ref));
                     
                     // 3. Delete User Doc
-                    await deleteDoc(doc(db, "users", uid));
+                    await deleteDoc(doc(window.db, "users", uid));
                     
                     alert("Akaun berjaya dipadam.");
                     window.handleLogout();
@@ -659,6 +659,7 @@
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
         db = getFirestore(app);
+        window.db = db;
         window.isFirebaseReady = true;
         console.log("Firebase Connected");
 
@@ -850,3 +851,4 @@
   </script>
 </body>
 </html>
+
