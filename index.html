@@ -549,31 +549,89 @@
                 // Store base64 string
                 const imageBase64 = e.target.result;
                 
-                setTimeout(() => {
-                    document.getElementById('aiLoading').classList.add('hidden');
-                    if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
-                        // Create data object with image
-                        const data = { 
-                            name: "Nasi Lemak", 
-                            calories: 450, 
-                            protein: 12, 
-                            carbs: 60, 
-                            date: getTodayDate(),
-                            image: imageBase64 // Store image data
-                        };
-                        
-                        if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
-                            // Note: Storing Base64 in Firestore is not recommended for large apps (use Storage), 
-                            // but fine for this prototype scale.
-                            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-                        } else { 
-                            mealLogs.push(data); 
-                            localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); 
-                            renderHomeStats(); 
-                        }
-                        showScreen('home');
-                    }
-                }, 1000);
+               setTimeout(() => {
+  document.getElementById('aiLoading').classList.add('hidden');
+
+  // 🇲🇾 Malaysian Food Database
+  const malaysianFoods = [
+ { name:"Nasi Lemak", calories:450, protein:12, carbs:60, keywords:["nasi","lemak"] },
+ { name:"Nasi Kandar", calories:650, protein:28, carbs:75, keywords:["kandar","curry"] },
+ { name:"Nasi Goreng", calories:550, protein:20, carbs:70, keywords:["goreng","fried"] },
+ { name:"Mee Goreng", calories:520, protein:18, carbs:68, keywords:["mee","noodle"] },
+ { name:"Char Kuey Teow", calories:700, protein:22, carbs:80, keywords:["char","teow"] },
+ { name:"Laksa Penang", calories:480, protein:20, carbs:55, keywords:["laksa"] },
+ { name:"Mee Rebus", calories:500, protein:18, carbs:65, keywords:["rebus"] },
+ { name:"Mee Soto", calories:460, protein:22, carbs:55, keywords:["soto"] },
+ { name:"Roti Canai", calories:300, protein:8, carbs:40, keywords:["roti"] },
+ { name:"Roti Telur", calories:380, protein:14, carbs:45, keywords:["roti","telur"] },
+ { name:"Ayam Goreng", calories:420, protein:35, carbs:10, keywords:["ayam","chicken"] },
+ { name:"Ayam Percik", calories:480, protein:32, carbs:15, keywords:["percik"] },
+ { name:"Rendang Daging", calories:520, protein:30, carbs:15, keywords:["rendang"] },
+ { name:"Satay Ayam", calories:350, protein:25, carbs:15, keywords:["satay"] },
+ { name:"Satay Daging", calories:400, protein:28, carbs:12, keywords:["satay","beef"] },
+ { name:"Nasi Kerabu", calories:500, protein:22, carbs:65, keywords:["kerabu"] },
+ { name:"Nasi Dagang", calories:600, protein:25, carbs:70, keywords:["dagang"] },
+ { name:"Nasi Tomato", calories:580, protein:20, carbs:75, keywords:["tomato"] },
+ { name:"Nasi Briyani", calories:680, protein:30, carbs:80, keywords:["briyani","biryani"] },
+ { name:"Nasi Hujan Panas", calories:620, protein:22, carbs:78, keywords:["hujan"] },
+ { name:"Sup Kambing", calories:430, protein:35, carbs:10, keywords:["kambing","soup"] },
+ { name:"Sup Ayam", calories:350, protein:28, carbs:12, keywords:["sup","ayam"] },
+ { name:"Burger Ramly", calories:550, protein:25, carbs:50, keywords:["burger"] },
+ { name:"Hot Dog Malaysia", calories:420, protein:15, carbs:40, keywords:["hotdog"] },
+ { name:"Apam Balik", calories:320, protein:8, carbs:45, keywords:["apam"] },
+ { name:"Kuih Seri Muka", calories:280, protein:5, carbs:40, keywords:["seri"] },
+ { name:"Kuih Lapis", calories:250, protein:4, carbs:38, keywords:["lapis"] },
+ { name:"Cendol", calories:300, protein:4, carbs:50, keywords:["cendol"] },
+ { name:"Ais Kacang", calories:350, protein:6, carbs:55, keywords:["ais","ice"] },
+ { name:"Teh Tarik", calories:180, protein:6, carbs:25, keywords:["teh"] },
+ { name:"Kopi O", calories:50, protein:1, carbs:8, keywords:["kopi"] },
+ { name:"Nasi Ayam", calories:600, protein:35, carbs:70, keywords:["nasi","ayam"] },
+ { name:"Hainanese Chicken Rice", calories:620, protein:36, carbs:72, keywords:["chicken","rice"] },
+ { name:"Claypot Chicken Rice", calories:650, protein:34, carbs:75, keywords:["claypot"] },
+ { name:"Tom Yam", calories:300, protein:20, carbs:15, keywords:["tomyam","tom"] },
+ { name:"Keropok Lekor", calories:280, protein:10, carbs:40, keywords:["keropok"] },
+ { name:"Otak-Otak", calories:260, protein:14, carbs:20, keywords:["otak"] },
+ { name:"Ikan Bakar", calories:420, protein:35, carbs:5, keywords:["ikan","fish"] },
+ { name:"Sambal Udang", calories:480, protein:28, carbs:18, keywords:["udang","prawn"] }
+];
+
+
+  const fileName = input.files[0].name.toLowerCase();
+
+  // Try keyword detection
+  let detectedFood = malaysianFoods.find(food =>
+      food.keywords.some(k => fileName.includes(k))
+  );
+
+  // If nothing matched → random realistic dish
+  if(!detectedFood){
+      detectedFood = malaysianFoods[Math.floor(Math.random()*malaysianFoods.length)];
+  }
+
+  const data = {
+    name: detectedFood.name,
+    calories: detectedFood.calories,
+    protein: detectedFood.protein,
+    carbs: detectedFood.carbs,
+    date: getTodayDate(),
+    image: imageBase64
+  };
+
+  if(confirm(`AI Detect: ${data.name} (${data.calories} kcal)\nSimpan ke diari?`)) {
+
+    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+    } else {
+        mealLogs.push(data);
+        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
+    }
+
+    renderHomeStats();
+    showScreen('home');
+  }
+
+}, 1200);
+
             }
             reader.readAsDataURL(input.files[0]);
         }
@@ -850,3 +908,4 @@
   </script>
 </body>
 </html>
+
