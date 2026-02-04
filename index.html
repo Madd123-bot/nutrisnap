@@ -294,8 +294,23 @@
              </div>
           </div>
           <p style="color:var(--muted);">Ambil gambar makanan untuk analisis AI.</p>
-          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleImageUpload(this)">
-          <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleImageUpload(this)">
+          <input 
+  type="file" 
+  id="cameraInput" 
+  accept="image/*" 
+  capture 
+  style="display:none"
+  onchange="handleImageUpload(this)"
+>
+
+<input 
+  type="file" 
+  id="galleryInput" 
+  accept="image/*" 
+  style="display:none"
+  onchange="handleImageUpload(this)"
+>
+
           <button class="primary" onclick="triggerCamera()">📸 Ambil Gambar</button>
           <button class="secondary" onclick="triggerGallery()">📁 Pilih dari Galeri</button>
           <button class="secondary" onclick="resetUpload()">Batal</button>
@@ -908,4 +923,5 @@
   </script>
 </body>
 </html>
+
 
