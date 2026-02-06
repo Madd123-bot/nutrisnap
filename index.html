@@ -6,7 +6,18 @@
   <title>NutriSnap</title>
   
   <style>
-    /* --- CSS UTAMA --- */
+    .profile-banner{
+    background:#fff7ed;
+    color:#c2410c;
+    border:1px solid #fdba74;
+    padding:10px;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:15px;
+    text-align:center;
+    }
+
     :root {
       --bg: #f0f7ff;
       --card: #ffffff;
@@ -319,6 +330,7 @@
       <!-- 8. PROFILE -->
       <section id="profile" class="screen">
         <div class="login-card">
+            <div id="profileBanner" class="profile-banner hidden">⚠️ Selesaikan profil anda untuk pengalaman penuh.</div>
             <div class="user-icon" style="width:80px; height:80px; font-size:32px; margin:0 auto 20px; background:var(--primary-gradient); box-shadow:0 10px 20px rgba(55, 124, 255, 0.3);">A</div>
             <h3 id="profileName">Pengguna</h3>
             <p id="profileReminder" style="color:#f59e0b; font-weight:600; display:none;">Selesaikan profil anda</p>
@@ -432,6 +444,16 @@
        }else{
           reminder.style.display = "none";
        }
+       const banner = document.getElementById('profileBanner');
+       if(
+        user.providerData[0]?.providerId === "google.com" &&
+        !localStorage.getItem('profileCompleted')
+       ){
+        banner.classList.remove('hidden');
+        }else{
+        banner.classList.add('hidden');
+        }
+
 
         document.getElementById('profileEmail').innerText = user.email;
         if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
