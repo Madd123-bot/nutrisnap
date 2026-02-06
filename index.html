@@ -400,6 +400,7 @@
 
 
 
+
     // --- 1. UI HELPERS ---
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
@@ -468,6 +469,9 @@
         } else if (window.subscribeToData) {
             window.subscribeToData(user.uid);
         }
+
+        showScreen('home');
+
 
 
     }
@@ -843,7 +847,6 @@
             const result = await signInWithPopup(auth, new GoogleAuthProvider());
             
             stat.innerText = "Berjaya! Mengalih...";
-            window.handleLoginSuccess(result.user);
             
         } catch (error) {
             console.error("Login Error:", error);
