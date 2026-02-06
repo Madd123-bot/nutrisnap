@@ -640,20 +640,45 @@
 
     try{
 
-        const res = await fetch(
-        "https://nutrisnap-ai-proxy-production.up.railway.app/ai",
-        {
-            method:"POST",
-            headers:{ "Content-Type":"application/json" },
-            body: JSON.stringify({ image: base64Image })
-        });
+        const ai = await fetch("https://api.openai.com/v1/chat/completions",{
+    method:"POST",
+    headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer " + process.env.OPENAI_API_KEY
+    },
+    body: JSON.stringify({
+        model:"gpt-4.1-mini",
+        messages:[
+            {
+                role:"user",
+                content:[
+                    {
+                        type:"text",
+                        text:"Detect Malaysian food. Return ONLY JSON array like [{name,calories,protein,carbs}]"
+                    },
+                    {
+                        type:"image_url",
+                        image_url:{ url:req.body.image }
+                    }
+                ]
+            }
+        ],
+        temperature:0
+    })
+});
+
 
         if(!res.ok){
             console.log("AI ERROR STATUS:",res.status);
             return null;
         }
 
-        const data = await res.json();
+        const data = await ai.json();
+if(!data.choices){
+    console.log("OPENAI RAW:",data);
+    return res.json([]);
+}
+
         console.log("AI RESULT:",data);
 
         return data;
