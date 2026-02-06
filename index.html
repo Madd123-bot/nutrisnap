@@ -378,23 +378,36 @@
    }
 
     async function analyzeFoodWithAI(base64Image) {
+
     try {
+
         const res = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer API_KEY_KAU"
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "Authorization":"Bearer API_KEY_KAU"
             },
             body: JSON.stringify({
-                model: "gpt-4.1-mini",
-                messages: [
+                model:"gpt-4.1-mini",
+                messages:[
                     {
-                        role: "user",
-                        content: [
-                            { type: "text", text:"Kenalpasti makanan dalam gambar dan bagi response JSON SAHAJA tanpa ayat lain dalam format: {\"name\":\"\",\"calories\":0,\"protein\":0,\"carbs\":0}" },
+                        role:"user",
+                        content:[
                             {
-                                type: "image_url",
-                                image_url: { url: base64Image }
+                                type:"text",
+                                text:`Kenalpasti semua makanan dalam gambar.
+Balas JSON SAHAJA tanpa ayat lain.
+
+Format:
+[
+ {"name":"", "calories":0, "protein":0, "carbs":0}
+]
+
+Anggaran nutrisi dalam gram dan kcal.`
+                            },
+                            {
+                                type:"image_url",
+                                image_url:{ url: base64Image }
                             }
                         ]
                     }
@@ -403,13 +416,20 @@
         });
 
         const data = await res.json();
-        const text = data.choices[0].message.content.trim();return JSON.parse(text);
 
-    } catch(e) {
-        console.error(e);
+        let text = data.choices[0].message.content.trim();
+
+        // remove code block kalau AI bagi ```json
+        text = text.replace(/```json/g,'').replace(/```/g,'');
+
+        return JSON.parse(text);
+
+    } catch(e){
+        console.error("AI ERROR:",e);
         return null;
     }
 }
+
 
     // --- 1. UI HELPERS ---
     function showScreen(id) {
@@ -634,39 +654,43 @@
                 
                 (async () => {
 
-    const result = await analyzeFoodWithAI(imageBase64);
+    const results = await analyzeFoodWithAI(imageBase64);
 
     document.getElementById('aiLoading').classList.add('hidden');
 
-    if(!result){
+    if(!results){
         alert("AI gagal detect makanan.");
         return;
     }
 
-    const data = {
-        name: result.name || "Makanan",
-        calories: result.calories || 0,
-        protein: result.protein || 0,
-        carbs: result.carbs || 0,
-        date: getTodayDate(),
-        image: imageBase64,
-        mealType: detectMealTime()
-    };
+    const mealType = detectMealTime();
 
-    if(confirm(`AI Detect: ${data.name}\n${data.calories} kcal\nSimpan?`)){
+    for(const r of results){
+
+        const data = {
+            name: r.name || "Makanan",
+            calories: r.calories || 0,
+            protein: r.protein || 0,
+            carbs: r.carbs || 0,
+            date: getTodayDate(),
+            image: imageBase64,
+            mealType: mealType
+        };
 
         if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-        } else {
+            await window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+        }else{
             mealLogs.push(data);
-            localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-            renderHomeStats();
         }
-
-        showScreen('home');
     }
 
+    localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
+
+    alert("AI berjaya detect makanan!");
+    showScreen('home');
+
 })();
+
 
             }
             reader.readAsDataURL(input.files[0]);
@@ -677,48 +701,47 @@
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('mealFilter').addEventListener('change', renderMeals);
-    window.resetApp = async () => { 
-    if(!confirm("Padam SEMUA data akaun? Tindakan ini tak boleh undo.")) return;
+    window.resetApp = async () => {
 
-    try {
+    if(!confirm("Padam semua diari & rekod?")) return;
 
-        // ===== CLOUD USER =====
+    try{
+
         if(currentUser && !currentUser.uid.startsWith('offline_') && window.isFirebaseReady){
 
             const uid = currentUser.uid;
-            const { deleteDoc, getDocs, doc } = window.fs_ops;
+            const { deleteDoc, getDocs } = window.fs_ops;
 
-            // 🔥 Padam Meals
             const mealsSnap = await getDocs(window.getCollection(uid,'meals'));
             for(const d of mealsSnap.docs){
                 await deleteDoc(d.ref);
             }
 
-            // 🔥 Padam Weight Logs
             const weightSnap = await getDocs(window.getCollection(uid,'weights'));
             for(const d of weightSnap.docs){
                 await deleteDoc(d.ref);
             }
-
-            // 🔥 Padam User Profile
-            await deleteDoc(doc(window.db,"users",uid));
         }
 
-        // ===== LOCAL DATA =====
+        // clear local only
         mealLogs = [];
         weightLogs = [];
+
         localStorage.removeItem('mealLogs');
         localStorage.removeItem('weightLogs');
-        localStorage.removeItem('userGoal');
+
+        renderHomeStats();
+        renderMeals();
+        renderWeightLogs();
 
         alert("Semua data berjaya dipadam.");
-        window.handleLogout();
 
-    } catch(e){
+    }catch(e){
         console.error(e);
-        alert("Ralat padam data: " + e.message);
+        alert("Ralat reset: "+e.message);
     }
 }
+
 
     
     // Save Weight
