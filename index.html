@@ -415,15 +415,6 @@
     // --- 3. LOGIN SUCCESS HANDLER ---
     window.handleLoginSuccess = (user) => {
         currentUser = user;
-if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
-    const userDocRef = doc(window.db,"users",user.uid);
-
-    getDocs(collection(window.db,"users")).then(()=>{}); 
-
-    setTimeout(async()=>{
-        const snap = await getDocs(collection(window.db,"users"));
-    },0);
-}
 
         console.log("LOGIN SUCCESS:", user.email);
         
@@ -444,13 +435,6 @@ if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
         }
 
         setTimeout(async () => {
-
-    if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
-        const ref = window.fs_ops.doc(window.db,"users",user.uid);
-        const snap = await window.fs_ops.getDocs(collection(window.db,"users"));
-
-    }
-
     if (!localStorage.getItem('profileCompleted') && user.providerData[0]?.providerId === "google.com") {
         document.getElementById('profileName').innerText = "Selesaikan profil anda";
         showScreen('profile');
@@ -712,7 +696,7 @@ if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
 
         const ref = window.fs_ops.doc(window.db,"users",currentUser.uid);
 
-        await setDoc(ref,{
+        await window.fs_ops.setDoc(ref,{
             fullName,
             username,
             job,
@@ -777,7 +761,7 @@ if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
     // --- EXPORTS TO WINDOW ---
     window.getCollection = (uid, col) => (window.isFirebaseReady && !uid.startsWith('offline_')) ? collection(db, 'users', uid, col) : null;
     window.fs = { query, orderBy, limit, onSnapshot, addDoc };
-    window.fs_ops = { deleteDoc, getDocs, doc }; // Export for delete logic
+    window.fs_ops = { deleteDoc, getDocs, doc, setDoc };
     
     // --- DATA SUBSCRIPTION ---
     window.subscribeToData = (uid) => {
@@ -948,4 +932,5 @@ if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
   </script>
 </body>
 </html>
+
 
