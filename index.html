@@ -25,10 +25,13 @@
     * { box-sizing: border-box; }
     
     html, body { 
-        height: 100%; margin: 0; background-color: var(--bg);
-        background-image: url("data:image/svg+xml,%3Csvg width='140' height='140' viewBox='0 0 140 140' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='10' y='30' font-size='24' opacity='0.2'%3E🍎%3C/text%3E%3Ctext x='60' y='40' font-size='24' opacity='0.2'%3E🥕%3C/text%3E%3Ctext x='30' y='90' font-size='24' opacity='0.2'%3E🥦%3C/text%3E%3Ctext x='90' y='80' font-size='24' opacity='0.2'%3E🍌%3C/text%3E%3Ctext x='110' y='30' font-size='24' opacity='0.2'%3E🍅%3C/text%3E%3Ctext x='10' y='120' font-size='24' opacity='0.2'%3E🌽%3C/text%3E%3C/svg%3E");
-        color: #32325d; -webkit-font-smoothing: antialiased;
-    }
+    height: 100%;
+    margin: 0;
+    background-color: #eef1f5; 
+    color: #32325d;
+    -webkit-font-smoothing: antialiased;
+}
+
 
     .hidden { display: none !important; }
     
@@ -332,7 +335,6 @@
             <h3 id="profileName">Pengguna</h3>
             <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
             <button class="secondary" style="margin-top:20px;">Edit Profil</button>
-            <div class="divider">ZON BAHAYA</div>
             <button class="danger-btn" onclick="resetApp()">Padam Semua Data (Reset)</button>
             <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
         </div>
@@ -618,37 +620,48 @@
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
     window.resetApp = async () => { 
-        if(confirm("AWAS: Ini akan memadam SEMUA data akaun anda di Cloud! Anda pasti?")) { 
-            if(currentUser && !currentUser.uid.startsWith('offline_') && window.fs && window.isFirebaseReady) {
-                // Cloud Deletion Logic
-                const uid = currentUser.uid;
-                const { deleteDoc, getDocs, doc } = window.fs_ops; // We need to export these from module
-                
-                try {
-                    // 1. Delete Meal Subcollection
-                    const mSnap = await getDocs(window.getCollection(uid, 'meals'));
-                    mSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 2. Delete Weight Subcollection
-                    const wSnap = await getDocs(window.getCollection(uid, 'weights'));
-                    wSnap.forEach(async (d) => await deleteDoc(d.ref));
-                    
-                    // 3. Delete User Doc
-                    await deleteDoc(doc(window.db, "users", uid));
-                    
-                    alert("Akaun berjaya dipadam.");
-                    window.handleLogout();
-                } catch(e) {
-                    console.error(e);
-                    alert("Ralat memadam data: " + e.message);
-                }
-            } else {
-                // Local Deletion
-                localStorage.clear(); 
-                location.reload(); 
+    if(!confirm("Padam SEMUA data akaun? Tindakan ini tak boleh undo.")) return;
+
+    try {
+
+        // ===== CLOUD USER =====
+        if(currentUser && !currentUser.uid.startsWith('offline_') && window.isFirebaseReady){
+
+            const uid = currentUser.uid;
+            const { deleteDoc, getDocs, doc } = window.fs_ops;
+
+            // 🔥 Padam Meals
+            const mealsSnap = await getDocs(window.getCollection(uid,'meals'));
+            for(const d of mealsSnap.docs){
+                await deleteDoc(d.ref);
             }
-        } 
-    };
+
+            // 🔥 Padam Weight Logs
+            const weightSnap = await getDocs(window.getCollection(uid,'weights'));
+            for(const d of weightSnap.docs){
+                await deleteDoc(d.ref);
+            }
+
+            // 🔥 Padam User Profile
+            await deleteDoc(doc(window.db,"users",uid));
+        }
+
+        // ===== LOCAL DATA =====
+        mealLogs = [];
+        weightLogs = [];
+        localStorage.removeItem('mealLogs');
+        localStorage.removeItem('weightLogs');
+        localStorage.removeItem('userGoal');
+
+        alert("Semua data berjaya dipadam.");
+        window.handleLogout();
+
+    } catch(e){
+        console.error(e);
+        alert("Ralat padam data: " + e.message);
+    }
+}
+
     
     // Save Weight
     window.saveWeight = () => {
@@ -885,5 +898,4 @@
   </script>
 </body>
 </html>
-
 
