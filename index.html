@@ -6,6 +6,34 @@
   <title>NutriSnap</title>
   
   <style>
+    .loading-overlay{
+ position:absolute;
+ inset:0;
+ background:rgba(255,255,255,0.8);
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ font-weight:600;
+ color:#377CFF;
+ z-index:5;
+}
+
+.spinner{
+ width:30px;
+ height:30px;
+ border:3px solid #e5e7eb;
+ border-top:3px solid #377CFF;
+ border-radius:50%;
+ animation:spin 1s linear infinite;
+ margin-bottom:10px;
+}
+
+@keyframes spin{
+ from{transform:rotate(0deg);}
+ to{transform:rotate(360deg);}
+}
+
     .popup{
  position:fixed;
  inset:0;
@@ -640,47 +668,25 @@
 
     try{
 
-        const ai = await fetch("https://api.openai.com/v1/chat/completions",{
-    method:"POST",
-    headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + process.env.OPENAI_API_KEY
-    },
-    body: JSON.stringify({
-        model:"gpt-4.1-mini",
-        messages:[
+        const res = await fetch(
+            "https://nutrisnap-ai-proxy-production.up.railway.app/ai",
             {
-                role:"user",
-                content:[
-                    {
-                        type:"text",
-                        text:"Detect Malaysian food. Return ONLY JSON array like [{name,calories,protein,carbs}]"
-                    },
-                    {
-                        type:"image_url",
-                        image_url:{ url:req.body.image }
-                    }
-                ]
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body: JSON.stringify({
+                    image: base64Image
+                })
             }
-        ],
-        temperature:0
-    })
-});
-
+        );
 
         if(!res.ok){
-            console.log("AI ERROR STATUS:",res.status);
+            console.log("AI STATUS:",res.status);
             return null;
         }
 
-        const data = await ai.json();
-if(!data.choices){
-    console.log("OPENAI RAW:",data);
-    return res.json([]);
-}
-
-        console.log("AI RESULT:",data);
-
+        const data = await res.json();
         return data;
 
     }catch(e){
@@ -688,10 +694,6 @@ if(!data.choices){
         return null;
     }
 }
-
-
-
-
 
     // --- 1. UI HELPERS ---
     function showScreen(id) {
