@@ -308,9 +308,13 @@
       <section id="analysis" class="screen">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <h3>Diari Makanan</h3>
-          <select id="metricToggle" style="width:auto; margin:0; padding:8px; border-color:var(--primary); color:var(--primary); font-weight:600;">
-            <option value="calories">Kalori</option><option value="protein">Protein</option><option value="carbs">Karbohidrat</option>
-          </select>
+          <select id="mealFilter">
+           <option value="all">Semua</option>
+           <option value="breakfast">Sarapan</option>
+           <option value="lunch">Makan Tengah Hari</option>
+          <option value="dinner">Makan Malam</option>
+      </select>
+ 
         </div>
         <div id="mealsContainer" style="margin-top:20px;"></div>
       </section>
@@ -364,6 +368,14 @@
 
   <!-- SINGLE LOGIC SCRIPT -->
   <script>
+   function detectMealTime(){
+
+    const hour = new Date().getHours();
+
+    if(hour >= 5 && hour < 11) return "breakfast";
+    if(hour >= 11 && hour < 17) return "lunch";
+    return "dinner";
+   }
 
     async function analyzeFoodWithAI(base64Image) {
     try {
@@ -379,7 +391,7 @@
                     {
                         role: "user",
                         content: [
-                            { type: "text", text: "Detect makanan dalam gambar dan bagi JSON: {name, calories, protein, carbs}" },
+                            { type: "text", text:"Kenalpasti makanan dalam gambar dan bagi response JSON SAHAJA tanpa ayat lain dalam format: {\"name\":\"\",\"calories\":0,\"protein\":0,\"carbs\":0}" },
                             {
                                 type: "image_url",
                                 image_url: { url: base64Image }
@@ -391,7 +403,8 @@
         });
 
         const data = await res.json();
-        return JSON.parse(data.choices[0].message.content);
+        const text = data.choices[0].message.content.trim();return JSON.parse(text);
+
     } catch(e) {
         console.error(e);
         return null;
@@ -568,7 +581,8 @@
         const container = document.getElementById('mealsContainer');
         container.innerHTML = '';
         const grouped = {};
-        mealLogs.forEach(i => { if(!grouped[i.date]) grouped[i.date]=[]; grouped[i.date].push(i); });
+        const filter = document.getElementById('mealFilter')?.value || "all";
+        mealLogs.forEach(i => { if(filter !== "all" && i.mealType !== filter) return; });
         
         Object.keys(grouped).sort().reverse().forEach(date => {
              let html = `<div class="meal-day"><h4>${date}</h4>`;
@@ -618,31 +632,42 @@
                 // Store base64 string
                 const imageBase64 = e.target.result;
                 
-                setTimeout(() => {
-                    document.getElementById('aiLoading').classList.add('hidden');
-                    if(confirm("AI Simulasi: Nasi Lemak (450 kcal). Simpan?")) {
-                        // Create data object with image
-                        const data = { 
-                            name: "Nasi Lemak", 
-                            calories: 450, 
-                            protein: 12, 
-                            carbs: 60, 
-                            date: getTodayDate(),
-                            image: imageBase64 // Store image data
-                        };
-                        
-                        if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
-                            // Note: Storing Base64 in Firestore is not recommended for large apps (use Storage), 
-                            // but fine for this prototype scale.
-                            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-                        } else { 
-                            mealLogs.push(data); 
-                            localStorage.setItem('mealLogs', JSON.stringify(mealLogs)); 
-                            renderHomeStats(); 
-                        }
-                        showScreen('home');
-                    }
-                }, 1000);
+                (async () => {
+
+    const result = await analyzeFoodWithAI(imageBase64);
+
+    document.getElementById('aiLoading').classList.add('hidden');
+
+    if(!result){
+        alert("AI gagal detect makanan.");
+        return;
+    }
+
+    const data = {
+        name: result.name || "Makanan",
+        calories: result.calories || 0,
+        protein: result.protein || 0,
+        carbs: result.carbs || 0,
+        date: getTodayDate(),
+        image: imageBase64,
+        mealType: detectMealTime()
+    };
+
+    if(confirm(`AI Detect: ${data.name}\n${data.calories} kcal\nSimpan?`)){
+
+        if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+            window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+        } else {
+            mealLogs.push(data);
+            localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
+            renderHomeStats();
+        }
+
+        showScreen('home');
+    }
+
+})();
+
             }
             reader.readAsDataURL(input.files[0]);
         }
@@ -651,7 +676,7 @@
     window.resetUpload = () => showScreen('home');
     function getTodayDate() { const d = new Date(); return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0]; }
     document.getElementById('inpDate').value = getTodayDate();
-    document.getElementById('metricToggle').addEventListener('change', (e) => { activeMealMetric = e.target.value; renderMeals(); });
+    document.getElementById('mealFilter').addEventListener('change', renderMeals);
     window.resetApp = async () => { 
     if(!confirm("Padam SEMUA data akaun? Tindakan ini tak boleh undo.")) return;
 
