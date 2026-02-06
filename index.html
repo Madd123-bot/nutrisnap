@@ -185,11 +185,6 @@
              <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27c3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10c5.35 0 9.25-3.67 9.25-9.09c0-1.15-.15-1.81-.15-1.81z"/></svg>
              Masuk dengan Google
           </button>
-
-          <button id="fbBtn" class="fb-btn" onclick="window.handleFacebookLogin()">
-             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/></svg>
-             Masuk dengan Facebook
-          </button>
           
           <div id="loginStatus" class="status-text"></div>
 
@@ -199,13 +194,6 @@
           
           <div class="login-hint" style="margin-top:15px; font-size:14px; color:#888;">
             <p>Tiada akaun? <a href="#" style="color:var(--primary); text-decoration:none; font-weight:700;" data-nav="emailSignup">Daftar sekarang</a></p>
-          </div>
-
-          <!-- DEV BYPASS BUTTON -->
-          <div style="margin-top:20px; border-top:1px dashed #eee; padding-top:10px;">
-            <button style="background:transparent; color:#bbb; border:1px dashed #ccc; font-size:12px; cursor:pointer;" onclick="window.forceOfflineLogin()">
-              🛠️ [Pintas] Masuk Tanpa Login
-            </button>
           </div>
         </div>
       </section>
@@ -334,12 +322,18 @@
             <div class="user-icon" style="width:80px; height:80px; font-size:32px; margin:0 auto 20px; background:var(--primary-gradient); box-shadow:0 10px 20px rgba(55, 124, 255, 0.3);">A</div>
             <h3 id="profileName">Pengguna</h3>
             <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
-            <button class="secondary" style="margin-top:20px;">Edit Profil</button>
+            <button class="secondary" style="margin-top:20px;" onclick="openEditProfile()">Edit Profil</button>
             <button class="danger-btn" onclick="resetApp()">Padam Semua Data (Reset)</button>
             <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
         </div>
+        <div id="editProfileForm" class="hidden" style="margin-top:15px;">
+            <input type="text" id="editFullName" placeholder="Nama Penuh">
+            <input type="text" id="editUsername" placeholder="Username">
+            <input type="text" id="editJob" placeholder="Pekerjaan">
+            <input type="number" id="editAge" placeholder="Umur">
+            <button class="primary" onclick="saveProfile()">Simpan Profil</button>
+        </div>
       </section>
-
     </main>
     
     <button id="fabBtn" class="fab-btn hidden" data-nav="upload">
@@ -421,6 +415,16 @@
     // --- 3. LOGIN SUCCESS HANDLER ---
     window.handleLoginSuccess = (user) => {
         currentUser = user;
+if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
+    const userDocRef = doc(window.db,"users",user.uid);
+
+    getDocs(collection(window.db,"users")).then(()=>{}); 
+
+    setTimeout(async()=>{
+        const snap = await getDocs(collection(window.db,"users"));
+    },0);
+}
+
         console.log("LOGIN SUCCESS:", user.email);
         
         const statusEl = document.getElementById('loginStatus');
@@ -439,15 +443,27 @@
             window.subscribeToData(user.uid);
         }
 
-        // FORCE REDIRECT - SKIP ONBOARDING IF ALREADY SET
-        setTimeout(() => {
-            if (!localStorage.getItem('userGoal')) {
-                showScreen('onboarding');
-            } else {
-                console.log("Redirecting to Home...");
-                showScreen('home');
-            }
-        }, 500); 
+        setTimeout(async () => {
+
+    if(window.isFirebaseReady && !user.uid.startsWith('offline_')){
+        const ref = window.fs_ops.doc(window.db,"users",user.uid);
+        const snap = await window.fs_ops.getDocs(collection(window.db,"users"));
+
+    }
+
+    if (!localStorage.getItem('profileCompleted') && user.providerData[0]?.providerId === "google.com") {
+        document.getElementById('profileName').innerText = "Selesaikan profil anda";
+        showScreen('profile');
+    }
+    else if (!localStorage.getItem('userGoal')) {
+        showScreen('onboarding');
+    } 
+    else {
+        showScreen('home');
+    }
+
+}, 500);
+
     }
 
     window.handleLogoutSuccess = () => {
@@ -680,6 +696,40 @@
         alert("Disimpan!");
     }
     document.getElementById('btnSaveWeight').onclick = window.saveWeight;
+    window.openEditProfile = () => {
+    document.getElementById('editProfileForm').classList.toggle('hidden');
+    }
+    window.saveProfile = async () => {
+
+    const fullName = document.getElementById('editFullName').value;
+    const username = document.getElementById('editUsername').value;
+    const job = document.getElementById('editJob').value;
+    const age = document.getElementById('editAge').value;
+
+    if(!fullName || !username) return alert("Isi maklumat wajib.");
+
+    if(currentUser && window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+
+        const ref = window.fs_ops.doc(window.db,"users",currentUser.uid);
+
+        await setDoc(ref,{
+            fullName,
+            username,
+            job,
+            age,
+            profileCompleted:true
+        },{ merge:true });
+
+    }
+
+    localStorage.setItem('profileCompleted','true');
+
+    document.getElementById('profileName').innerText = fullName;
+
+    alert("Profil dikemaskini!");
+    showScreen('home');
+    }
+
   </script>
 
   <!-- FIREBASE MODULE (Runs Last) -->
