@@ -511,7 +511,7 @@
                 stat.innerText = "Domain Blocked. Entering Offline Mode...";
                 setTimeout(() => window.forceOfflineLogin('Google'), 1000);
             } else {
-                alert("Ralat: " + error.message);
+                showPopup("Ralat: " + error.message);
                 btn.innerText = "Masuk dengan Google";
                 btn.disabled = false;
                 stat.innerText = "";
@@ -537,7 +537,7 @@
                 stat.innerText = "Domain Blocked. Entering Offline Mode...";
                 setTimeout(() => window.forceOfflineLogin('Facebook'), 1000);
             } else {
-                alert("Ralat: " + error.message);
+                showPopup("Ralat: " + error.message);
                 btn.disabled = false;
                 btn.innerText = "Masuk dengan Facebook";
                 stat.innerText = "";
@@ -562,7 +562,7 @@
                 localStorage.setItem('isLoggedIn', 'true');
                 window.handleLoginSuccess(u);
             } else {
-                alert("Gagal: " + error.message);
+                showPopup("Gagal: " + error.message);
             }
         }
     };
@@ -611,7 +611,7 @@
             const users = JSON.parse(localStorage.getItem('simUsers') || '[]');
             users.push({uid: "sim_"+Date.now(), displayName: name, email, pass});
             localStorage.setItem('simUsers', JSON.stringify(users));
-            alert("Didaftarkan secara Offline (Firebase Gagal). Sila Login.");
+            showPopup("Didaftarkan secara Offline (Firebase Gagal). Sila Login.");
             showScreen('emailLogin');
         }
     };
@@ -978,7 +978,7 @@
 
     }catch(e){
         console.error(e);
-        alert("Ralat reset: "+e.message);
+        showPopup("Ralat reset: "+e.message);
     }
 }
 
@@ -1011,7 +1011,7 @@
     const job = document.getElementById('editJob').value;
     const age = document.getElementById('editAge').value;
 
-    if(!fullName || !username) return alert("Isi maklumat wajib.");
+    if(!fullName || !username) return showPopup("Isi maklumat wajib.");
 
     if(currentUser && window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
 
@@ -1047,4 +1047,5 @@ function closePopup(){
   </script>
 </body>
 </html>
+
 
