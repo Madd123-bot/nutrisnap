@@ -368,67 +368,37 @@
 
   <!-- SINGLE LOGIC SCRIPT -->
   <script>
-   function detectMealTime(){
 
+   function detectMealTime(){
     const hour = new Date().getHours();
 
-    if(hour >= 5 && hour < 11) return "breakfast";
-    if(hour >= 11 && hour < 17) return "lunch";
-    return "dinner";
-   }
+    if(hour < 11) return "Sarapan";
+    if(hour < 17) return "Makan Tengah Hari";
+    return "Makan Malam";
+}
+
 
     async function analyzeFoodWithAI(base64Image) {
-
     try {
-
-        const res = await fetch("https://api.openai.com/v1/chat/completions", {
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json",
-                "Authorization":"Bearer API_KEY_KAU"
+        const res = await fetch("https://nutrisnap-ai-proxy-production.up.railway.app/analyze", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model:"gpt-4.1-mini",
-                messages:[
-                    {
-                        role:"user",
-                        content:[
-                            {
-                                type:"text",
-                                text:`Kenalpasti semua makanan dalam gambar.
-Balas JSON SAHAJA tanpa ayat lain.
-
-Format:
-[
- {"name":"", "calories":0, "protein":0, "carbs":0}
-]
-
-Anggaran nutrisi dalam gram dan kcal.`
-                            },
-                            {
-                                type:"image_url",
-                                image_url:{ url: base64Image }
-                            }
-                        ]
-                    }
-                ]
+                image: base64Image
             })
         });
 
         const data = await res.json();
+        return data;
 
-        let text = data.choices[0].message.content.trim();
-
-        // remove code block kalau AI bagi ```json
-        text = text.replace(/```json/g,'').replace(/```/g,'');
-
-        return JSON.parse(text);
-
-    } catch(e){
-        console.error("AI ERROR:",e);
+    } catch(e) {
+        console.error(e);
         return null;
     }
 }
+
 
 
     // --- 1. UI HELPERS ---
@@ -501,18 +471,42 @@ Anggaran nutrisi dalam gram dan kcal.`
         }
 
         setTimeout(async () => {
-    if (!localStorage.getItem('profileCompleted') && user.providerData[0]?.providerId === "google.com") {
-        document.getElementById('profileName').innerText = "Selesaikan profil anda";
-        showScreen('profile');
-    }
-    else if (!localStorage.getItem('userGoal')) {
-        showScreen('onboarding');
-    } 
-    else {
-        showScreen('home');
+
+    const aiResult = await analyzeFoodWithAI(imageBase64);
+
+    document.getElementById('aiLoading').classList.add('hidden');
+
+    if(!aiResult){
+        alert("AI gagal analisis.");
+        return;
     }
 
+    const mealTime = detectMealTime();
+
+    const data = {
+        name: aiResult.name || "Makanan",
+        calories: aiResult.calories || 0,
+        protein: aiResult.protein || 0,
+        carbs: aiResult.carbs || 0,
+        portion: aiResult.portion || "1 hidangan",
+        mealTime: mealTime,
+        date: getTodayDate(),
+        image: imageBase64
+    };
+
+    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
+        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+    } else {
+        mealLogs.push(data);
+        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
+        renderHomeStats();
+    }
+
+    alert(`${data.name} disimpan sebagai ${mealTime}`);
+    showScreen('home');
+
 }, 500);
+
 
     }
 
