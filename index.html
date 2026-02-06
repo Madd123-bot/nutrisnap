@@ -6,6 +6,26 @@
   <title>NutriSnap</title>
   
   <style>
+    .popup{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,0.4);
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ z-index:9999;
+}
+
+.popup-card{
+ background:white;
+ padding:20px;
+ border-radius:14px;
+ width:80%;
+ max-width:320px;
+ text-align:center;
+ box-shadow:0 10px 30px rgba(0,0,0,0.2);
+}
+
     .profile-banner{
     background:#fff7ed;
     color:#c2410c;
@@ -366,6 +386,14 @@
     </nav>
   </div>
 
+  <div id="appPopup" class="popup hidden">
+  <div class="popup-card">
+    <div id="popupText">Text</div>
+    <button class="primary" onclick="closePopup()">OK</button>
+  </div>
+</div>
+
+
   <!-- SINGLE LOGIC SCRIPT -->
  
 
@@ -492,7 +520,7 @@
     window.handleEmailLogin = async () => { 
         const email = document.getElementById('loginEmail').value;
         const pass = document.getElementById('loginPass').value;
-        if(!email || !pass) return alert("Sila isi info");
+        if(!email || !pass) return showPopup("Sila isi info");
         
         try {
             const res = await signInWithEmailAndPassword(auth, email, pass);
@@ -522,7 +550,7 @@
         const goal = document.getElementById('signupGoal').value;
         const pass = document.getElementById('signupPass').value;
 
-        if(!name || !email || !pass) return alert("Sila isi info wajib.");
+        if(!name || !email || !pass) return showPopup("Sila isi info wajib.");
         
         try {
             const res = await createUserWithEmailAndPassword(auth, email, pass);
@@ -608,26 +636,34 @@
     return "dinner";
 }
 
-    async function analyzeFoodWithAI(base64Image) {
-    try {
-        const res = await fetch("https://nutrisnap-ai-proxy-production.up.railway.app/ai", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                image: base64Image
-            })
+    async function analyzeFoodWithAI(base64Image){
+
+    try{
+
+        const res = await fetch(
+        "https://nutrisnap-ai-proxy-production.up.railway.app/ai",
+        {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ image: base64Image })
         });
 
+        if(!res.ok){
+            console.log("AI ERROR STATUS:",res.status);
+            return null;
+        }
+
         const data = await res.json();
+        console.log("AI RESULT:",data);
+
         return data;
 
-    } catch(e) {
-        console.error(e);
+    }catch(e){
+        console.log("AI FETCH ERROR:",e);
         return null;
     }
 }
+
 
 
 
@@ -706,7 +742,7 @@
         document.getElementById('aiLoading').classList.add('hidden');
 
         if(!results){
-            alert("AI gagal detect makanan.");
+            showPopup("AI gagal detect makanan.");
             return;
         }
 
@@ -733,7 +769,7 @@
 
         localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
 
-        alert("AI berjaya detect makanan!");
+        showPopup("AI berjaya detect makanan!");
         showScreen('home');
     };
 
@@ -911,7 +947,7 @@
         renderMeals();
         renderWeightLogs();
 
-        alert("Semua data berjaya dipadam.");
+        showPopup("Semua data berjaya dipadam.");
 
     }catch(e){
         console.error(e);
@@ -924,7 +960,7 @@
     // Save Weight
     window.saveWeight = () => {
         const w = document.getElementById('inpWeight').value;
-        if (!w) return alert("Isi berat.");
+        if (!w) return showPopup("Isi berat.");
         const data = { weight: parseFloat(w), date: document.getElementById('inpDate').value };
         
         if (currentUser.uid.startsWith('offline_')) {
@@ -935,7 +971,7 @@
             window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), data);
         }
         document.getElementById('inpWeight').value = '';
-        alert("Disimpan!");
+        showPopup("Disimpan!");
     }
     document.getElementById('btnSaveWeight').onclick = window.saveWeight;
     window.openEditProfile = () => {
@@ -968,9 +1004,18 @@
 
     document.getElementById('profileName').innerText = fullName;
 
-    alert("Profil dikemaskini!");
+    showPopup("Profil dikemaskini!");
     showScreen('home');
     }
+    function showPopup(text){
+  document.getElementById("popupText").innerText = text;
+  document.getElementById("appPopup").classList.remove("hidden");
+}
+
+function closePopup(){
+  document.getElementById("appPopup").classList.add("hidden");
+}
+
 
   </script>
 </body>
