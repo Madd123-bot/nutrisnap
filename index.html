@@ -321,6 +321,7 @@
         <div class="login-card">
             <div class="user-icon" style="width:80px; height:80px; font-size:32px; margin:0 auto 20px; background:var(--primary-gradient); box-shadow:0 10px 20px rgba(55, 124, 255, 0.3);">A</div>
             <h3 id="profileName">Pengguna</h3>
+            <p id="profileReminder" style="color:#f59e0b; font-weight:600; display:none;">Selesaikan profil anda</p>
             <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
             <button class="secondary" style="margin-top:20px;" onclick="openEditProfile()">Edit Profil</button>
             <button class="danger-btn" onclick="resetApp()">Padam Semua Data (Reset)</button>
@@ -422,6 +423,16 @@
         if(statusEl) statusEl.innerText = "Berjaya! Mengalih...";
 
         document.getElementById('profileName').innerText = user.displayName || "Pengguna";
+        const reminder = document.getElementById('profileReminder');
+        if(
+          user.providerData[0]?.providerId === "google.com" &&
+          !localStorage.getItem('profileCompleted')
+          ){
+          reminder.style.display = "block";
+       }else{
+          reminder.style.display = "none";
+       }
+
         document.getElementById('profileEmail').innerText = user.email;
         if(user.photoURL) document.getElementById('userIcon').innerHTML = `<img src="${user.photoURL}">`;
         else document.getElementById('userIcon').innerText = (user.displayName || "A").charAt(0).toUpperCase();
@@ -932,5 +943,4 @@
   </script>
 </body>
 </html>
-
 
