@@ -379,7 +379,7 @@
 
     async function analyzeFoodWithAI(base64Image) {
     try {
-        const res = await fetch("https://nutrisnap-ai-proxy-production.up.railway.app/analyze", {
+        const res = await fetch("https://nutrisnap-ai-proxy-production.up.railway.app/ai", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -983,4 +983,5 @@
   </script>
 </body>
 </html>
+
 
