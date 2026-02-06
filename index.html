@@ -372,11 +372,10 @@
    function detectMealTime(){
     const hour = new Date().getHours();
 
-    if(hour < 11) return "Sarapan";
-    if(hour < 17) return "Makan Tengah Hari";
-    return "Makan Malam";
+    if(hour < 11) return "breakfast";
+    if(hour < 17) return "lunch";
+    return "dinner";
 }
-
 
     async function analyzeFoodWithAI(base64Image) {
     try {
@@ -470,43 +469,6 @@
             window.subscribeToData(user.uid);
         }
 
-        setTimeout(async () => {
-
-    const aiResult = await analyzeFoodWithAI(imageBase64);
-
-    document.getElementById('aiLoading').classList.add('hidden');
-
-    if(!aiResult){
-        alert("AI gagal analisis.");
-        return;
-    }
-
-    const mealTime = detectMealTime();
-
-    const data = {
-        name: aiResult.name || "Makanan",
-        calories: aiResult.calories || 0,
-        protein: aiResult.protein || 0,
-        carbs: aiResult.carbs || 0,
-        portion: aiResult.portion || "1 hidangan",
-        mealTime: mealTime,
-        date: getTodayDate(),
-        image: imageBase64
-    };
-
-    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')) {
-        window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-    } else {
-        mealLogs.push(data);
-        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-        renderHomeStats();
-    }
-
-    alert(`${data.name} disimpan sebagai ${mealTime}`);
-    showScreen('home');
-
-}, 500);
-
 
     }
 
@@ -592,37 +554,48 @@
     }
 
     function renderMeals() { 
-        const container = document.getElementById('mealsContainer');
-        container.innerHTML = '';
-        const grouped = {};
-        const filter = document.getElementById('mealFilter')?.value || "all";
-        mealLogs.forEach(i => { if(filter !== "all" && i.mealType !== filter) return; });
-        
-        Object.keys(grouped).sort().reverse().forEach(date => {
-             let html = `<div class="meal-day"><h4>${date}</h4>`;
-             grouped[date].forEach(i => {
-                 // Check if image exists
-                 let imgHtml = '';
-                 if (i.image) {
-                     imgHtml = `<img src="${i.image}" class="meal-img-thumb" alt="food">`;
-                 }
-                 
-                 html += `
-                 <div class="list-item">
-                    <div class="meal-row-content">
-                        ${imgHtml}
-                        <div class="meal-info">
-                            <div style="font-weight:700">${i.name}</div>
-                            <div style="font-size:12px; color:#888;">
-                                ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
-                            </div>
+    const container = document.getElementById('mealsContainer');
+    container.innerHTML = '';
+
+    const grouped = {};
+    const filter = document.getElementById('mealFilter')?.value || "all";
+
+    mealLogs.forEach(i => {
+
+        if(filter !== "all" && i.mealType !== filter) return;
+
+        if(!grouped[i.date]) grouped[i.date] = [];
+        grouped[i.date].push(i);
+    });
+
+    Object.keys(grouped).sort().reverse().forEach(date => {
+
+        let html = `<div class="meal-day"><h4>${date}</h4>`;
+
+        grouped[date].forEach(i => {
+
+            let imgHtml = i.image
+                ? `<img src="${i.image}" class="meal-img-thumb">`
+                : '';
+
+            html += `
+            <div class="list-item">
+                <div class="meal-row-content">
+                    ${imgHtml}
+                    <div class="meal-info">
+                        <div style="font-weight:700">${i.name}</div>
+                        <div style="font-size:12px;color:#888;">
+                            ${i.mealType || ""} • ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
                         </div>
                     </div>
-                 </div>`;
-             });
-             container.innerHTML += html + '</div>';
+                </div>
+            </div>`;
         });
-    }
+
+        container.innerHTML += html + '</div>';
+    });
+}
+
 
     // --- 5. UTILS ---
     window.saveOnboarding = () => {
