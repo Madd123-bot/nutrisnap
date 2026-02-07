@@ -6,6 +6,18 @@
   <title>NutriSnap</title>
   
   <style>
+    .avatar-shake{
+ animation:shake .35s;
+}
+
+@keyframes shake{
+ 0%{transform:translateX(0);}
+ 25%{transform:translateX(-4px);}
+ 50%{transform:translateX(4px);}
+ 75%{transform:translateX(-3px);}
+ 100%{transform:translateX(0);}
+}
+
     .sheet{
  position:fixed;
  inset:0;
@@ -260,9 +272,29 @@
     }
     .meal-row-content { display: flex; align-items: center; width: 100%; }
     .meal-info { flex: 1; }
+    .reset-flash{
+ position:fixed;
+ inset:0;
+ background:white;
+ z-index:99999;
+ opacity:0;
+ pointer-events:none;
+}
+
+.reset-flash.active{
+ animation:flashReset .6s ease;
+}
+
+@keyframes flashReset{
+ 0%{opacity:0;}
+ 40%{opacity:1;}
+ 100%{opacity:0;}
+}
+
   </style>
 </head>
 <body>
+    <div id="resetFlash" class="reset-flash"></div>
 
   <div id="app">
     <header class="topbar">
@@ -955,6 +987,22 @@ showPopup(breakdown);
             window.handleLoginSuccess(u);
         }
     });
+    function animateNumber(el,start,end,duration=500){
+
+ const range = start - end;
+ const startTime = performance.now();
+
+ function update(time){
+   const progress = Math.min((time-startTime)/duration,1);
+   const value = Math.round(start-(range*progress));
+   el.innerText = value;
+
+   if(progress<1) requestAnimationFrame(update);
+ }
+
+ requestAnimationFrame(update);
+}
+
 
     // --- 4. DATA LOGIC ---
     function renderHomeStats() {
@@ -964,7 +1012,7 @@ showPopup(breakdown);
         const eaten = sum('calories');
         const target = getDailyCalorieTarget();
         const balance = logs.length === 0 ? 0 : (target - eaten);
-        document.getElementById('calBalance').innerText = balance;
+        const calEl = document.getElementById('calBalance'); animateNumber(calEl, parseInt(calEl.innerText)||0, balance);
         document.getElementById('protBalance').innerText = sum('protein');
         document.getElementById('carbBalance').innerText = sum('carbs');
         
@@ -1070,73 +1118,90 @@ showPopup(breakdown);
     document.getElementById('inpDate').value = getTodayDate();
     document.getElementById('mealFilter').addEventListener('change', renderMeals);
     window.resetApp = async () => {
+document.querySelectorAll('.user-icon').forEach(el=>{
+ el.classList.add("avatar-shake");
+ setTimeout(()=>el.classList.remove("avatar-shake"),350);
+});
 
-    if(!confirm("Padam semua diari & rekod?")) return;
+if(!confirm("Padam semua data & reset akaun?")) return;
+// 🔥 start animation flash
+const flash = document.getElementById("resetFlash");
+flash.classList.add("active");
 
-    try{
-
-        // 🔥 STOP realtime listener dulu
-        if(window.unsubscribeMeals) window.unsubscribeMeals();
-        if(window.unsubscribeWeight) window.unsubscribeWeight();
-
-        if(currentUser && !currentUser.uid.startsWith('offline_') && window.isFirebaseReady){
-
-            const uid = currentUser.uid;
-            const { deleteDoc, getDocs } = window.fs_ops;
-
-            const mealsSnap = await getDocs(window.getCollection(uid,'meals'));
-            for(const d of mealsSnap.docs){
-                await Promise.all(mealsSnap.docs.map(d => deleteDoc(d.ref)));
-                await Promise.all(weightSnap.docs.map(d => deleteDoc(d.ref)));
-            }
-
-            const weightSnap = await getDocs(window.getCollection(uid,'weights'));
-            for(const d of weightSnap.docs){
-                await deleteDoc(d.ref);
-            }
-        }
-
-        // 🔥 clear semua state
-        mealLogs = [];
-        weightLogs = [];
-        
-        localStorage.removeItem("userGoal");
-        localStorage.removeItem('mealLogs');
-        localStorage.removeItem('weightLogs');
-
-        // 🔥 clear UI terus
-        document.getElementById('recentMealsList').innerHTML =
-            '<div class="list-item" style="justify-content:center;color:#999">Tiada rekod hari ini</div>';
-
-        document.getElementById('calBalance').innerText = "0";
-        document.getElementById('protBalance').innerText = "0";
-        document.getElementById('carbBalance').innerText = "0";
-
-        renderMeals();
-        renderWeightLogs();
-
-        showPopup("Semua data berjaya dipadam.");
-        // 🔥 paksa UI refresh kosong betul-betul
-       mealLogs = [];
-       weightLogs = [];
-
-       renderHomeStats();
-       renderMeals();
-       renderWeightLogs();
-
-
-    }catch(e){
-        console.error(e);
-        alert("Ralat reset: "+e.message);
-    }
-    setTimeout(()=>{
-    renderHomeStats();
-    },300);
-
+if(navigator.vibrate){
+ navigator.vibrate(120);
 }
 
+setTimeout(()=>{
+ flash.classList.remove("active");
+},600);
 
+try{
 
+    // 🛑 stop realtime listener dulu
+    if(window.unsubscribeMeals) window.unsubscribeMeals();
+    if(window.unsubscribeWeight) window.unsubscribeWeight();
+
+    // =========================
+    // 🔥 DELETE FIRESTORE DATA
+    // =========================
+    if(currentUser && window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+
+        const uid = currentUser.uid;
+        const { deleteDoc, getDocs } = window.fs_ops;
+
+        // delete meals
+        const mealsSnap = await getDocs(window.getCollection(uid,'meals'));
+        await Promise.all(mealsSnap.docs.map(d => deleteDoc(d.ref)));
+
+        // delete weights
+        const weightSnap = await getDocs(window.getCollection(uid,'weights'));
+        await Promise.all(weightSnap.docs.map(d => deleteDoc(d.ref)));
+    }
+
+    // =========================
+    // 🧠 CLEAR LOCAL STATE
+    // =========================
+    mealLogs = [];
+    weightLogs = [];
+
+    // =========================
+    // 📦 CLEAR LOCAL STORAGE
+    // =========================
+    localStorage.removeItem("mealLogs");
+    localStorage.removeItem("weightLogs");
+    localStorage.removeItem("userGoal");
+    localStorage.removeItem("avatar");
+    localStorage.removeItem("profileCompleted");
+
+    // =========================
+    // 🎨 RESET UI
+    // =========================
+    document.querySelectorAll('.user-icon').forEach(el=>{
+        el.innerHTML = "A";
+    });
+
+    document.getElementById('profileName').innerText = "Pengguna";
+
+    document.getElementById('calBalance').innerText = "0";
+    document.getElementById('protBalance').innerText = "0";
+    document.getElementById('carbBalance').innerText = "0";
+
+    document.getElementById('recentMealsList').innerHTML =
+        '<div class="list-item" style="justify-content:center;color:#999">Tiada rekod hari ini</div>';
+
+    renderHomeStats();
+    renderMeals();
+    renderWeightLogs();
+
+    showPopup("🔥 Semua data berjaya direset (Pro Mode)");
+
+}catch(e){
+    console.error(e);
+    alert("Reset Error: "+e.message);
+}
+
+};
     
     // Save Weight
     window.saveWeight = () => {
