@@ -392,6 +392,7 @@
             <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
         </div>
         <div id="editProfileForm" class="hidden" style="margin-top:15px;">
+            <input type="file" id="editPhoto" accept="image/*">
             <input type="text" id="editFullName" placeholder="Nama Penuh">
             <input type="text" id="editUsername" placeholder="Username">
             <input type="text" id="editJob" placeholder="Pekerjaan">
@@ -639,6 +640,12 @@
     if(window.subscribeToData && !user.uid.startsWith('offline_')){
         window.subscribeToData(user.uid);
     }
+    if(user.photoURL){
+    document.querySelectorAll('.user-icon').forEach(el=>{
+        el.innerHTML = `<img src="${user.photoURL}">`;
+    });
+}
+
 };
 
     window.updateDataBridge = (type, data) => {
@@ -1018,23 +1025,39 @@ showPopup(breakdown);
     document.getElementById('editProfileForm').classList.toggle('hidden');
     }
     window.saveProfile = async () => {
-
+    const file = document.getElementById("editPhoto").files[0];
+    let photoURL = currentUser.photoURL || null;
     const fullName = document.getElementById('editFullName').value;
     const username = document.getElementById('editUsername').value;
     const job = document.getElementById('editJob').value;
     const age = document.getElementById('editAge').value;
-
+    if(photoURL){
+    document.querySelectorAll('.user-icon').forEach(el=>{
+        el.innerHTML = `<img src="${photoURL}">`;
+    });
+}
     if(!fullName || !username) return showPopup("Isi maklumat wajib.");
+    // 🔥 convert image ke base64
+if(file){
+    const reader = new FileReader();
+    photoURL = await new Promise(resolve=>{
+        reader.onload = e => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
+}
+
 
     if(currentUser && window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
 
         const ref = window.fs_ops.doc(window.db,"users",currentUser.uid);
+        
 
         await window.fs_ops.setDoc(ref,{
             fullName,
             username,
             job,
             age,
+            photoURL,
             profileCompleted:true
         },{ merge:true });
 
