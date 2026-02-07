@@ -415,7 +415,7 @@
      style="width:80px;height:80px;font-size:32px;margin:0 auto 20px;
      background:var(--primary-gradient);
      box-shadow:0 10px 20px rgba(55,124,255,.3);"
-     onclick="document.getElementById('avatarInput').click()">
+     onclick="document.getElementById('avatarSheet').classList.remove('hidden')">
      A
 </div>
             <h3 id="profileName">Pengguna</h3>
@@ -682,10 +682,6 @@
         
     currentUser = user;
     const savedAvatar = localStorage.getItem("avatar");
-if(savedAvatar){
- document.getElementById("userIcon").innerHTML =
-   `<img src="${savedAvatar}">`;
-}
 
 if(savedAvatar){
     document.querySelectorAll('.user-icon').forEach(el=>{
@@ -1239,8 +1235,9 @@ async function handleAvatar(file){
    const avatarBase64 = canvas.toDataURL("image/jpeg",0.8);
 
    // update UI avatar
-   const icon = document.getElementById("userIcon");
-   icon.innerHTML = `<img src="${avatarBase64}">`;
+   document.querySelectorAll('.user-icon').forEach(el=>{
+   el.innerHTML = `<img src="${avatarBase64}">`;
+});
 
    localStorage.setItem("avatar",avatarBase64);
 
