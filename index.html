@@ -963,7 +963,7 @@ showPopup(breakdown);
         const sum = (k) => logs.reduce((a, b) => a + (b[k]||0), 0);
         const eaten = sum('calories');
         const target = getDailyCalorieTarget();
-        const balance = target - eaten;
+        const balance = logs.length === 0 ? 0 : (target - eaten);
         document.getElementById('calBalance').innerText = balance;
         document.getElementById('protBalance').innerText = sum('protein');
         document.getElementById('carbBalance').innerText = sum('carbs');
