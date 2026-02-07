@@ -793,12 +793,20 @@
         mealLogs.push(data);
     }
 }
+// 🔥 bina text breakdown makanan
+let breakdown = "AI detect:\n\n";
+
+results.forEach(i=>{
+    breakdown += "• " + (i.name || "Makanan") + "\n";
+});
+
+showPopup(breakdown);
+
 
 
 
         localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
 
-        showPopup("AI berjaya detect makanan!");
         showScreen('home');
     };
 
@@ -838,7 +846,10 @@
         const today = getTodayDate();
         const logs = mealLogs.filter(l => l.date === today);
         const sum = (k) => logs.reduce((a, b) => a + (b[k]||0), 0);
-        document.getElementById('calBalance').innerText = sum('calories');
+        const eaten = sum('calories');
+        const target = getDailyCalorieTarget();
+        const balance = target - eaten;
+        document.getElementById('calBalance').innerText = balance;
         document.getElementById('protBalance').innerText = sum('protein');
         document.getElementById('carbBalance').innerText = sum('carbs');
         
@@ -919,7 +930,7 @@
                     <div class="meal-info">
                         <div style="font-weight:700">${i.name}</div>
                         <div style="font-size:12px;color:#888;">
-                            ${i.mealType || ""} • ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
+                            ${i.mealType || ""} ${i.portion ? "• "+i.portion : ""} • ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
                         </div>
                     </div>
                 </div>
@@ -1043,6 +1054,22 @@
 
 function closePopup(){
   document.getElementById("appPopup").classList.add("hidden");
+}
+function getDailyCalorieTarget(){
+
+    const userGoal = localStorage.getItem("userGoal");
+    const currentWeight = document.getElementById("signupWeight")?.value 
+        || localStorage.getItem("currentWeight") 
+        || 70;
+
+    let maintenance = currentWeight * 30;
+
+    // kalau ada goal weight → assume fat loss
+    if(userGoal){
+        maintenance -= 400;
+    }
+
+    return Math.round(maintenance);
 }
 
 
