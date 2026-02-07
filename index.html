@@ -1086,7 +1086,8 @@ showPopup(breakdown);
 
             const mealsSnap = await getDocs(window.getCollection(uid,'meals'));
             for(const d of mealsSnap.docs){
-                await deleteDoc(d.ref);
+                await Promise.all(mealsSnap.docs.map(d => deleteDoc(d.ref)));
+                await Promise.all(weightSnap.docs.map(d => deleteDoc(d.ref)));
             }
 
             const weightSnap = await getDocs(window.getCollection(uid,'weights'));
@@ -1115,11 +1116,23 @@ showPopup(breakdown);
         renderWeightLogs();
 
         showPopup("Semua data berjaya dipadam.");
+        // 🔥 paksa UI refresh kosong betul-betul
+       mealLogs = [];
+       weightLogs = [];
+
+       renderHomeStats();
+       renderMeals();
+       renderWeightLogs();
+
 
     }catch(e){
         console.error(e);
         alert("Ralat reset: "+e.message);
     }
+    setTimeout(()=>{
+    renderHomeStats();
+    },300);
+
 }
 
 
