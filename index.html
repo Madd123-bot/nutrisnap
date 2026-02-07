@@ -6,6 +6,30 @@
   <title>NutriSnap</title>
   
   <style>
+    .sheet{
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,0.4);
+ display:flex;
+ align-items:flex-end;
+ justify-content:center;
+ z-index:9999;
+}
+
+.sheet-card{
+ width:100%;
+ max-width:420px;
+ background:#fff;
+ border-radius:20px 20px 0 0;
+ padding:15px;
+ animation:slideUp .25s ease;
+}
+
+@keyframes slideUp{
+ from{transform:translateY(100%);}
+ to{transform:translateY(0);}
+}
+
     .loading-overlay{
  position:absolute;
  inset:0;
@@ -108,6 +132,10 @@
         font-weight: 600; cursor: pointer; overflow: hidden;
     }
     .user-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .user-icon:active{
+ transform:scale(1.15);
+ transition:0.15s;
+}
 
     /* Screens */
     .screens { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; position: relative; }
@@ -383,7 +411,13 @@
       <section id="profile" class="screen">
         <div class="login-card">
             <div id="profileBanner" class="profile-banner hidden">⚠️ Selesaikan profil anda untuk pengalaman penuh.</div>
-            <div class="user-icon" style="width:80px; height:80px; font-size:32px; margin:0 auto 20px; background:var(--primary-gradient); box-shadow:0 10px 20px rgba(55, 124, 255, 0.3);">A</div>
+            <div class="user-icon" id="profileAvatar"
+     style="width:80px;height:80px;font-size:32px;margin:0 auto 20px;
+     background:var(--primary-gradient);
+     box-shadow:0 10px 20px rgba(55,124,255,.3);"
+     onclick="document.getElementById('avatarInput').click()">
+     A
+</div>
             <h3 id="profileName">Pengguna</h3>
             <p id="profileReminder" style="color:#f59e0b; font-weight:600; display:none;">Selesaikan profil anda</p>
             <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
@@ -392,13 +426,18 @@
             <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
         </div>
         <div id="editProfileForm" class="hidden" style="margin-top:15px;">
-            <input type="file" id="editPhoto" accept="image/*">
             <input type="text" id="editFullName" placeholder="Nama Penuh">
             <input type="text" id="editUsername" placeholder="Username">
             <input type="text" id="editJob" placeholder="Pekerjaan">
             <input type="number" id="editAge" placeholder="Umur">
             <button class="primary" onclick="saveProfile()">Simpan Profil</button>
         </div>
+        <input type="file"
+       id="avatarInput"
+       accept="image/*"
+       capture="environment"
+       style="display:none"
+       onchange="handleAvatarUpload(this)">
       </section>
     </main>
     
@@ -421,6 +460,18 @@
     <button class="primary" onclick="closePopup()">OK</button>
   </div>
 </div>
+
+<div id="avatarSheet" class="sheet hidden">
+  <div class="sheet-card">
+    <button onclick="pickCamera()">📸 Ambil Gambar</button>
+    <button onclick="pickGallery()">🖼 Pilih dari Galeri</button>
+    <button class="danger-btn" onclick="closeSheet()">Batal</button>
+  </div>
+</div>
+
+<input type="file" id="avatarCamera" accept="image/*" capture="environment" hidden>
+<input type="file" id="avatarGallery" accept="image/*" hidden>
+
 
 
   <!-- SINGLE LOGIC SCRIPT -->
@@ -628,7 +679,20 @@
   <!-- BRIDGE -->
   <script>
     window.handleLoginSuccess = (user) => {
+        
     currentUser = user;
+    const savedAvatar = localStorage.getItem("avatar");
+if(savedAvatar){
+ document.getElementById("userIcon").innerHTML =
+   `<img src="${savedAvatar}">`;
+}
+
+if(savedAvatar){
+    document.querySelectorAll('.user-icon').forEach(el=>{
+        el.innerHTML = `<img src="${savedAvatar}">`;
+    });
+}
+
 
     document.getElementById('profileName').innerText =
         user.displayName || "Pengguna";
@@ -967,6 +1031,10 @@ showPopup(breakdown);
 
     try{
 
+        // 🔥 STOP realtime listener dulu
+        if(window.unsubscribeMeals) window.unsubscribeMeals();
+        if(window.unsubscribeWeight) window.unsubscribeWeight();
+
         if(currentUser && !currentUser.uid.startsWith('offline_') && window.isFirebaseReady){
 
             const uid = currentUser.uid;
@@ -983,14 +1051,21 @@ showPopup(breakdown);
             }
         }
 
-        // clear local only
+        // 🔥 clear semua state
         mealLogs = [];
         weightLogs = [];
 
         localStorage.removeItem('mealLogs');
         localStorage.removeItem('weightLogs');
 
-        renderHomeStats();
+        // 🔥 clear UI terus
+        document.getElementById('recentMealsList').innerHTML =
+            '<div class="list-item" style="justify-content:center;color:#999">Tiada rekod hari ini</div>';
+
+        document.getElementById('calBalance').innerText = "0";
+        document.getElementById('protBalance').innerText = "0";
+        document.getElementById('carbBalance').innerText = "0";
+
         renderMeals();
         renderWeightLogs();
 
@@ -998,9 +1073,10 @@ showPopup(breakdown);
 
     }catch(e){
         console.error(e);
-        showPopup("Ralat reset: "+e.message);
+        alert("Ralat reset: "+e.message);
     }
 }
+
 
 
     
@@ -1094,6 +1170,95 @@ function getDailyCalorieTarget(){
 
     return Math.round(maintenance);
 }
+window.handleAvatarUpload = function(input){
+
+    if(!input.files[0]) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+
+        const img = e.target.result;
+
+        // tukar avatar UI
+        document.querySelectorAll('.user-icon').forEach(el=>{
+            el.innerHTML = `<img src="${img}">`;
+        });
+
+        // simpan sementara
+        localStorage.setItem("avatar", img);
+
+        if(currentUser) currentUser.photoURL = img;
+    };
+
+    reader.readAsDataURL(input.files[0]);
+};
+document.getElementById("userIcon").onclick = ()=>{
+ document.getElementById("avatarSheet").classList.remove("hidden");
+};
+
+function closeSheet(){
+ document.getElementById("avatarSheet").classList.add("hidden");
+}
+
+function pickCamera(){
+ document.getElementById("avatarCamera").click();
+}
+
+function pickGallery(){
+ document.getElementById("avatarGallery").click();
+}
+
+async function handleAvatar(file){
+
+ const img = new Image();
+ const reader = new FileReader();
+
+ reader.onload = e => img.src = e.target.result;
+
+ img.onload = ()=>{
+
+   const canvas = document.createElement("canvas");
+   const ctx = canvas.getContext("2d");
+
+   const size = 300;
+   canvas.width = size;
+   canvas.height = size;
+
+   // crop tengah
+   const min = Math.min(img.width,img.height);
+   const sx = (img.width-min)/2;
+   const sy = (img.height-min)/2;
+
+   ctx.beginPath();
+   ctx.arc(size/2,size/2,size/2,0,Math.PI*2);
+   ctx.clip();
+
+   ctx.drawImage(img,sx,sy,min,min,0,0,size,size);
+
+   const avatarBase64 = canvas.toDataURL("image/jpeg",0.8);
+
+   // update UI avatar
+   const icon = document.getElementById("userIcon");
+   icon.innerHTML = `<img src="${avatarBase64}">`;
+
+   localStorage.setItem("avatar",avatarBase64);
+
+   closeSheet();
+ };
+
+ reader.readAsDataURL(file);
+}
+document.getElementById("avatarCamera").onchange = e=>{
+ if(e.target.files[0]) handleAvatar(e.target.files[0]);
+};
+
+document.getElementById("avatarGallery").onchange = e=>{
+ if(e.target.files[0]) handleAvatar(e.target.files[0]);
+};
+
+
+
 
 
   </script>
