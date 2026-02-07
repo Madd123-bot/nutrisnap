@@ -1204,21 +1204,48 @@ try{
 };
     
     // Save Weight
-    window.saveWeight = () => {
-        const w = document.getElementById('inpWeight').value;
-        if (!w) return showPopup("Isi berat.");
-        const data = { weight: parseFloat(w), date: document.getElementById('inpDate').value };
-        
-        if (currentUser.uid.startsWith('offline_')) {
-            weightLogs.push(data);
-            localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
-            renderWeightLogs();
-        } else if (window.fs) {
-            window.fs.addDoc(window.getCollection(currentUser.uid, 'weights'), data);
-        }
-        document.getElementById('inpWeight').value = '';
-        showPopup("Disimpan!");
-    }
+    window.saveWeight = async () => {
+
+ const w = document.getElementById('inpWeight').value;
+
+ if(!w){
+   showPopup("Isi berat.");
+   return;
+ }
+
+ const data = {
+   weight: parseFloat(w),
+   date: document.getElementById('inpDate').value
+ };
+
+ try{
+
+   // ✅ ONLINE FIREBASE
+   if(currentUser && window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+
+       await window.fs.addDoc(
+         window.getCollection(currentUser.uid,'weights'),
+         data
+       );
+
+   }else{
+
+       // ✅ OFFLINE MODE
+       weightLogs.push(data);
+       localStorage.setItem('weightLogs', JSON.stringify(weightLogs));
+       renderWeightLogs();
+   }
+
+   document.getElementById('inpWeight').value = '';
+   showPopup("Berat disimpan!");
+
+ }catch(e){
+   console.log(e);
+   showPopup("Gagal simpan berat.");
+ }
+
+};
+
     document.getElementById('btnSaveWeight').onclick = window.saveWeight;
     window.saveProfile = async () => {
 
@@ -1370,5 +1397,4 @@ document.getElementById("avatarGallery").onchange = e=>{
   </script>
 </body>
 </html>
-
 
