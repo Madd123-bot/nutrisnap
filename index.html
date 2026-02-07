@@ -775,24 +775,31 @@
 
         const mealType = detectMealTime();
 
-        for(const r of results){
+        for(const foodName of results){
 
-            const data = {
-                name: r.name || "Makanan",
-                calories: r.calories || 0,
-                protein: r.protein || 0,
-                carbs: r.carbs || 0,
-                date: getTodayDate(),
-                image: imageBase64,
-                mealType
-            };
+    const nutrisi = FOOD_DB[foodName.toLowerCase()] || {
+        calories:50,
+        protein:2,
+        carbs:5
+    };
 
-            if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-                await window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-            }else{
-                mealLogs.push(data);
-            }
-        }
+    const data = {
+        name: foodName,
+        calories: nutrisi.calories,
+        protein: nutrisi.protein,
+        carbs: nutrisi.carbs,
+        date: getTodayDate(),
+        image: imageBase64,
+        mealType
+    };
+
+    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+        await window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+    }else{
+        mealLogs.push(data);
+    }
+}
+
 
         localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
 
@@ -1047,5 +1054,4 @@ function closePopup(){
   </script>
 </body>
 </html>
-
 
