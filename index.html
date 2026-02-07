@@ -140,6 +140,17 @@
     /* Screens */
     .screens { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; position: relative; }
     .screen { display: none; animation: fadeIn 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); }
+    .screen.slide-enter{animation: slideInRight .35s ease;}
+   @keyframes slideInRight{
+    from{
+     transform:translateX(100%);
+     opacity:0.5;
+    }
+    to{
+     transform:translateX(0);
+     opacity:1;
+    }
+   }
     .screen.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -433,6 +444,27 @@
        style="display:none"
        onchange="handleAvatarUpload(this)">
       </section>
+
+      <section id="editProfilePage" class="screen">
+      <div class="login-card">
+
+      <div class="user-icon"
+      style="width:100px;height:100px;margin:0 auto 20px;
+      background:var(--primary-gradient);"
+      onclick="document.getElementById('avatarSheet').classList.remove('hidden')">
+      <img id="editAvatarPreview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" src="">
+      </div>
+
+      <input type="text" id="editFullName2" placeholder="Nama Penuh">
+      <input type="text" id="editUsername2" placeholder="Username">
+      <input type="text" id="editJob2" placeholder="Pekerjaan">
+      <input type="number" id="editAge2" placeholder="Umur">
+
+      <button class="primary" onclick="saveProfile()">Simpan Profil</button>
+      <button class="secondary" onclick="showScreen('profile')">Kembali</button>
+
+      </div>
+      </section>
     </main>
     
     <button id="fabBtn" class="fab-btn hidden" data-nav="upload">
@@ -466,26 +498,7 @@
 <input type="file" id="avatarCamera" accept="image/*" capture="environment" hidden>
 <input type="file" id="avatarGallery" accept="image/*" hidden>
 
-<section id="editProfilePage" class="screen">
-  <div class="login-card">
 
-    <div class="user-icon"
-      style="width:100px;height:100px;margin:0 auto 20px;
-      background:var(--primary-gradient);"
-      onclick="document.getElementById('avatarInput').click()">
-      <img id="editAvatarPreview" src="">
-    </div>
-
-    <input type="text" id="editFullName2" placeholder="Nama Penuh">
-    <input type="text" id="editUsername2" placeholder="Username">
-    <input type="text" id="editJob2" placeholder="Pekerjaan">
-    <input type="number" id="editAge2" placeholder="Umur">
-
-    <button class="primary" onclick="saveProfile()">Simpan Profil</button>
-    <button class="secondary" onclick="showScreen('profile')">Kembali</button>
-
-  </div>
-</section>
 
 
 
@@ -703,6 +716,9 @@ if(savedAvatar){
     document.querySelectorAll('.user-icon').forEach(el=>{
         el.innerHTML = `<img src="${savedAvatar}">`;
     });
+    const preview = document.getElementById("editAvatarPreview");
+if(preview) preview.src = avatarBase64;
+
 }
 
 
@@ -780,22 +796,38 @@ if(savedAvatar){
 
     // --- 1. UI HELPERS ---
     function showScreen(id) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id===id));
-        const isAuth = ['login', 'emailLogin', 'emailSignup', 'onboarding'].includes(id);
-        const hideNav = isAuth; 
 
-        const els = [document.getElementById('mainNav'), document.getElementById('fabBtn'), document.getElementById('userIcon')];
-        els.forEach(el => el.classList.toggle('hidden', hideNav));
-        
-        // Handle Nav State
-        document.querySelectorAll('.nav-btn').forEach(b => {
-             b.classList.toggle('active', b.getAttribute('data-nav') === id);
-        });
-        
-        if(id === 'home') renderHomeStats();
-        if(id === 'weight') renderWeightLogs();
-        if(id === 'analysis') renderMeals();
-    }
+    document.querySelectorAll('.screen').forEach(s=>{
+        s.classList.remove('active','slide-enter');
+        if(s.id === id){
+            s.classList.add('active');
+
+            // 👉 kalau edit profile → slide animation
+            if(id === "editProfilePage"){
+                s.classList.add('slide-enter');
+            }
+        }
+    });
+
+    const isAuth = ['login','emailLogin','emailSignup','onboarding'].includes(id);
+
+    const els = [
+        document.getElementById('mainNav'),
+        document.getElementById('fabBtn'),
+        document.getElementById('userIcon')
+    ];
+
+    els.forEach(el => el.classList.toggle('hidden', isAuth));
+
+    document.querySelectorAll('.nav-btn').forEach(b=>{
+        b.classList.toggle('active', b.getAttribute('data-nav') === id);
+    });
+
+    if(id === 'home') renderHomeStats();
+    if(id === 'weight') renderWeightLogs();
+    if(id === 'analysis') renderMeals();
+}
+
     document.querySelectorAll('[data-nav]').forEach(el => {
         el.addEventListener('click', (e) => { e.preventDefault(); showScreen(el.dataset.nav); });
     });
@@ -1110,55 +1142,37 @@ showPopup(breakdown);
         showPopup("Disimpan!");
     }
     document.getElementById('btnSaveWeight').onclick = window.saveWeight;
-    window.openEditProfile = () => {
-    document.getElementById('editProfileForm').classList.toggle('hidden');
-    }
     window.saveProfile = async () => {
-    const file = document.getElementById("editPhoto").files[0];
-    let photoURL = currentUser.photoURL || null;
-    const fullName = document.getElementById('editFullName').value;
-    const username = document.getElementById('editUsername').value;
-    const job = document.getElementById('editJob').value;
-    const age = document.getElementById('editAge').value;
-    if(photoURL){
-    document.querySelectorAll('.user-icon').forEach(el=>{
-        el.innerHTML = `<img src="${photoURL}">`;
-    });
-}
-    if(!fullName || !username) return showPopup("Isi maklumat wajib.");
-    // 🔥 convert image ke base64
-if(file){
-    const reader = new FileReader();
-    photoURL = await new Promise(resolve=>{
-        reader.onload = e => resolve(e.target.result);
-        reader.readAsDataURL(file);
-    });
-}
 
+    const fullName = document.getElementById('editFullName2').value;
+    const username = document.getElementById('editUsername2').value;
+    const job = document.getElementById('editJob2').value;
+    const age = document.getElementById('editAge2').value;
+
+    if(!fullName || !username){
+        showPopup("Isi maklumat wajib.");
+        return;
+    }
 
     if(currentUser && window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-
         const ref = window.fs_ops.doc(window.db,"users",currentUser.uid);
-        
 
         await window.fs_ops.setDoc(ref,{
             fullName,
             username,
             job,
             age,
-            photoURL,
             profileCompleted:true
         },{ merge:true });
-
     }
-
-    localStorage.setItem('profileCompleted','true');
 
     document.getElementById('profileName').innerText = fullName;
 
     showPopup("Profil dikemaskini!");
-    showScreen('home');
-    }
+    showScreen('profile');
+};
+
+
     function showPopup(text){
   document.getElementById("popupText").innerText = text;
   document.getElementById("appPopup").classList.remove("hidden");
