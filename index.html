@@ -421,17 +421,11 @@
             <h3 id="profileName">Pengguna</h3>
             <p id="profileReminder" style="color:#f59e0b; font-weight:600; display:none;">Selesaikan profil anda</p>
             <p style="color:var(--muted);" id="profileEmail">user@example.com</p>
-            <button class="secondary" style="margin-top:20px;" onclick="openEditProfile()">Edit Profil</button>
+            <button class="secondary" style="margin-top:20px;" onclick="showScreen('editProfilePage')">Edit Profil</button>
             <button class="danger-btn" onclick="resetApp()">Padam Semua Data (Reset)</button>
             <button class="secondary" style="color:var(--danger); border:1px solid var(--danger); background:transparent;" onclick="window.handleLogout()">Log Keluar</button>
         </div>
-        <div id="editProfileForm" class="hidden" style="margin-top:15px;">
-            <input type="text" id="editFullName" placeholder="Nama Penuh">
-            <input type="text" id="editUsername" placeholder="Username">
-            <input type="text" id="editJob" placeholder="Pekerjaan">
-            <input type="number" id="editAge" placeholder="Umur">
-            <button class="primary" onclick="saveProfile()">Simpan Profil</button>
-        </div>
+        
         <input type="file"
        id="avatarInput"
        accept="image/*"
@@ -471,6 +465,28 @@
 
 <input type="file" id="avatarCamera" accept="image/*" capture="environment" hidden>
 <input type="file" id="avatarGallery" accept="image/*" hidden>
+
+<section id="editProfilePage" class="screen">
+  <div class="login-card">
+
+    <div class="user-icon"
+      style="width:100px;height:100px;margin:0 auto 20px;
+      background:var(--primary-gradient);"
+      onclick="document.getElementById('avatarInput').click()">
+      <img id="editAvatarPreview" src="">
+    </div>
+
+    <input type="text" id="editFullName2" placeholder="Nama Penuh">
+    <input type="text" id="editUsername2" placeholder="Username">
+    <input type="text" id="editJob2" placeholder="Pekerjaan">
+    <input type="number" id="editAge2" placeholder="Umur">
+
+    <button class="primary" onclick="saveProfile()">Simpan Profil</button>
+    <button class="secondary" onclick="showScreen('profile')">Kembali</button>
+
+  </div>
+</section>
+
 
 
 
@@ -1050,7 +1066,8 @@ showPopup(breakdown);
         // 🔥 clear semua state
         mealLogs = [];
         weightLogs = [];
-
+        
+        localStorage.removeItem("userGoal");
         localStorage.removeItem('mealLogs');
         localStorage.removeItem('weightLogs');
 
