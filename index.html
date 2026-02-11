@@ -839,38 +839,23 @@ if(preview) preview.src = avatarBase64;
     try{
 
         const res = await fetch(
-            "https://api-inference.huggingface.co/models/nateraw/food",
+            "https://nutrisnap-ai-proxy-production.up.railway.app/ai",
             {
                 method:"POST",
                 headers:{
-                    "Authorization":"Bearer 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",
                     "Content-Type":"application/json"
                 },
-                body: base64Image.split(",")[1] // buang prefix data:image
+                body: JSON.stringify({
+                    image: base64Image
+                })
             }
         );
 
         const data = await res.json();
-
-        console.log("HF RAW:",data);
-
-        if(!Array.isArray(data)) return null;
-
-        // ambik top result je (simple version)
-        const top = data[0];
-        const localName = translateFoodName(top.label);
-
-
-        // convert format supaya match code kau
-       return [{
-    name: localName,
-    calories: getLocalCalories(localName),
-    protein: 10,
-    carbs: 40
-}];
+        return data;
 
     }catch(e){
-        console.log("HF ERROR:",e);
+        console.log("AI FETCH ERROR:",e);
         return null;
     }
 }
