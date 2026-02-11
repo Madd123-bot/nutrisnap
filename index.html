@@ -144,6 +144,29 @@
         font-weight: 600; cursor: pointer; overflow: hidden;
     }
     .user-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-wrap{
+ position:relative;
+ width:100px;
+ height:100px;
+ margin:0 auto 20px;
+}
+
+.avatar-edit{
+ position:absolute;
+ bottom:0;
+ right:0;
+ width:28px;
+ height:28px;
+ border-radius:50%;
+ background:#377CFF;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:white;
+ font-size:14px;
+ box-shadow:0 3px 8px rgba(0,0,0,0.2);
+}
+
     .user-icon:active{
  transform:scale(1.15);
  transition:0.15s;
@@ -480,12 +503,21 @@
       <section id="editProfilePage" class="screen">
       <div class="login-card">
 
-      <div class="user-icon"
-      style="width:100px;height:100px;margin:0 auto 20px;
-      background:var(--primary-gradient);"
-      onclick="document.getElementById('avatarSheet').classList.remove('hidden')">
-      <img id="editAvatarPreview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" src="">
-      </div>
+      <div class="avatar-wrap"
+ onclick="document.getElementById('avatarSheet').classList.remove('hidden')">
+
+  <div class="user-icon"
+  style="width:100px;height:100px;background:var(--primary-gradient);">
+
+    <img id="editAvatarPreview"
+    style="width:100%;height:100%;object-fit:cover;border-radius:50%;" src="">
+  
+  </div>
+
+  <div class="avatar-edit">✏️</div>
+
+</div>
+
 
       <input type="text" id="editFullName2" placeholder="Nama Penuh">
       <input type="text" id="editUsername2" placeholder="Username">
