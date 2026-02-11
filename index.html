@@ -453,7 +453,7 @@
       <!-- 8. PROFILE -->
       <section id="profile" class="screen">
         <div class="login-card">
-            <div id="profileBanner" class="profile-banner hidden">⚠️ Selesaikan profil anda untuk pengalaman penuh.</div>
+            <div id="profileBanner" class="profile-banner hidden">⚠️ Selesaikan profil anda.</div>
             <div class="user-icon" id="profileAvatar"
      style="width:80px;height:80px;font-size:32px;margin:0 auto 20px;
      background:var(--primary-gradient);
@@ -870,108 +870,95 @@ if(preview) preview.src = avatarBase64;
     const API_KEY = ""; 
 
     // --- 3. LOGIN SUCCESS HANDLER ---
-    window.handleImageUpload = (input) => {
+    window.handleImageUpload = (input) => { 
+    if (!input.files || !input.files[0]) return;
 
- if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+    const img = new Image();
+    const reader = new FileReader();
 
- const file = input.files[0];
- const img = new Image();
- const reader = new FileReader();
+    reader.onload = function(e){
+        img.src = e.target.result;
+    };
 
- reader.onload = e => img.src = e.target.result;
+    img.onload = async function(){
 
- img.onload = async function(){
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-   const canvas = document.createElement("canvas");
-   const ctx = canvas.getContext("2d");
+        // 🔥 resize max width 512px (cukup untuk AI)
+        const MAX = 512;
+        let w = img.width;
+        let h = img.height;
 
-   const MAX = 512;
-   let w = img.width;
-   let h = img.height;
+        if(w > h){
+            if(w > MAX){
+                h *= MAX / w;
+                w = MAX;
+            }
+        }else{
+            if(h > MAX){
+                w *= MAX / h;
+                h = MAX;
+            }
+        }
 
-   if(w>h){
-     if(w>MAX){ h*=MAX/w; w=MAX; }
-   }else{
-     if(h>MAX){ w*=MAX/h; h=MAX; }
-   }
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img,0,0,w,h);
 
-   canvas.width = w;
-   canvas.height = h;
-   ctx.drawImage(img,0,0,w,h);
+        const imageBase64 = canvas.toDataURL("image/jpeg",0.7);
 
-   const imageBase64 = canvas.toDataURL("image/jpeg",0.7);
+        document.getElementById('aiLoading').classList.remove('hidden');
 
-   document.getElementById('aiLoading').classList.remove('hidden');
+        const results = await analyzeFoodWithAI(imageBase64);
 
-   const results = await analyzeFoodWithAI(imageBase64);
+        document.getElementById('aiLoading').classList.add('hidden');
 
-   document.getElementById('aiLoading').classList.add('hidden');
+        if(!results){
+            showPopup("AI gagal detect makanan.");
+            return;
+        }
 
-   if(!results || !results.length){
-     showPopup("AI tak detect makanan.");
-     return;
-   }
+        const mealType = detectMealTime();
 
-   const FOOD_DB = {
-     egg:{calories:70,protein:6,carbs:1},
-     rice:{calories:130,protein:2,carbs:28},
-     cucumber:{calories:8,protein:0,carbs:2},
-     chicken:{calories:220,protein:20,carbs:5},
-     sausage:{calories:150,protein:8,carbs:2},
-     tofu:{calories:90,protein:10,carbs:3},
-     icecream:{calories:180,protein:3,carbs:22},
-     bread:{calories:80,protein:3,carbs:15}
-   };
+        for(const r of results){
 
-   let totalCalories = 0;
-   let totalProtein = 0;
-   let totalCarbs = 0;
+    const data = {
+        name: r.name || "Makanan",
+        calories: r.calories || 0,
+        protein: r.protein || 0,
+        carbs: r.carbs || 0,
+        date: getTodayDate(),
+        image: imageBase64,
+        mealType
+    };
 
-   let breakdown = "AI detect:\n\n";
+    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+        await window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
+    }else{
+        mealLogs.push(data);
+    }
+}
+// 🔥 bina text breakdown makanan
+let breakdown = "AI detect:\n\n";
 
-   results.forEach(food=>{
+results.forEach(i=>{
+    breakdown += "• " + (i.name || "Makanan") + "\n";
+});
 
-     const key = food.toLowerCase();
-     const nut = FOOD_DB[key] || {calories:60,protein:2,carbs:10};
+showPopup(breakdown);
 
-     totalCalories += nut.calories;
-     totalProtein += nut.protein;
-     totalCarbs += nut.carbs;
 
-     breakdown += "• " + food + "\n";
 
-   });
 
-   breakdown += "\n🔥 Total: "+totalCalories+" kcal";
+        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
 
-   const mealType = detectMealTime();
+        showScreen('home');
+    };
 
-   const data = {
-     name: results.join(", "),
-     calories: totalCalories,
-     protein: totalProtein,
-     carbs: totalCarbs,
-     date: getTodayDate(),
-     image:imageBase64,
-     mealType
-   };
-
-   if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-     await window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-   }else{
-     mealLogs.push(data);
-     localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-   }
-
-   showPopup(breakdown);
-
-   renderHomeStats();
-   showScreen('home');
- };
-
- reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
 };
-
 
 
     window.handleLogoutSuccess = () => {
@@ -1207,7 +1194,7 @@ try{
     renderMeals();
     renderWeightLogs();
 
-    showPopup("🔥 Semua data berjaya direset (Pro Mode)");
+    showPopup("🔥 Semua data berjaya direset");
 
 }catch(e){
     console.error(e);
@@ -1410,4 +1397,3 @@ document.getElementById("avatarGallery").onchange = e=>{
   </script>
 </body>
 </html>
-
