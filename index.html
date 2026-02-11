@@ -739,6 +739,31 @@
 
   <!-- BRIDGE -->
   <script>
+
+    function translateFoodName(label){
+
+    const map = {
+        "fried rice":"nasi goreng",
+        "white rice":"nasi",
+        "rice":"nasi",
+        "burger":"burger",
+        "pizza":"pizza",
+        "sandwich":"sandwich",
+        "spaghetti":"spageti",
+        "noodles":"mee",
+        "ramen":"mee",
+        "salad":"salad",
+        "omelette":"telur",
+        "fried chicken":"ayam goreng",
+        "grilled chicken":"ayam",
+        "chicken curry":"kari ayam"
+    };
+
+    const key = label.toLowerCase();
+
+    return map[key] || label;
+}
+
     window.handleLoginSuccess = (user) => {
         
     currentUser = user;
@@ -786,6 +811,20 @@ if(preview) preview.src = avatarBase64;
   </script>
 
    <script>
+    function getLocalCalories(name){
+
+    const db = {
+        "nasi goreng":630,
+        "ayam goreng":320,
+        "burger":295,
+        "pizza":266,
+        "mee":400,
+        "nasi":200
+    };
+
+    return db[name.toLowerCase()] || 250;
+}
+
 
    function detectMealTime(){
     const hour = new Date().getHours();
@@ -800,31 +839,42 @@ if(preview) preview.src = avatarBase64;
     try{
 
         const res = await fetch(
-            "https://nutrisnap-ai-proxy-production.up.railway.app/ai",
+            "https://api-inference.huggingface.co/models/nateraw/food",
             {
                 method:"POST",
                 headers:{
+                    "Authorization":"Bearer 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",
                     "Content-Type":"application/json"
                 },
-                body: JSON.stringify({
-                    image: base64Image
-                })
+                body: base64Image.split(",")[1] // buang prefix data:image
             }
         );
 
-        if(!res.ok){
-            console.log("AI STATUS:",res.status);
-            return null;
-        }
-
         const data = await res.json();
-        return data;
+
+        console.log("HF RAW:",data);
+
+        if(!Array.isArray(data)) return null;
+
+        // ambik top result je (simple version)
+        const top = data[0];
+        const localName = translateFoodName(top.label);
+
+
+        // convert format supaya match code kau
+       return [{
+    name: localName,
+    calories: getLocalCalories(localName),
+    protein: 10,
+    carbs: 40
+}];
 
     }catch(e){
-        console.log("AI FETCH ERROR:",e);
+        console.log("HF ERROR:",e);
         return null;
     }
 }
+
 
     // --- 1. UI HELPERS ---
     function showScreen(id) {
