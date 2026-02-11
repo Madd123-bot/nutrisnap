@@ -6,6 +6,36 @@
   <title>NutriSnap</title>
   
   <style>
+    .avatar-edit{
+ position:absolute;
+ bottom:0;
+ right:0;
+ width:28px;
+ height:28px;
+ border-radius:50%;
+ background:#377CFF;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ color:white;
+ font-size:14px;
+ box-shadow:0 3px 8px rgba(0,0,0,0.2);
+
+ opacity:0;
+ transform:scale(.7);
+ transition:.25s;
+}
+
+.avatar-wrap:hover .avatar-edit,
+.avatar-wrap:active .avatar-edit{
+ opacity:1;
+ transform:scale(1);
+}
+.avatar-wrap:active .user-icon{
+ transform:scale(1.06);
+ transition:.15s;
+}
+
     .avatar-shake{
  animation:shake .35s;
 }
@@ -144,6 +174,13 @@
         font-weight: 600; cursor: pointer; overflow: hidden;
     }
     .user-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-wrap .user-icon{
+ transition:.2s;
+}
+
+.avatar-wrap:hover .user-icon{
+ box-shadow:0 0 0 4px rgba(55,124,255,0.15);
+}
     .avatar-wrap{
  position:relative;
  width:100px;
