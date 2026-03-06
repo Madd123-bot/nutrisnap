@@ -1118,15 +1118,31 @@ if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
         
         const list = document.getElementById('recentMealsList');
         list.innerHTML = logs.length ? '' : `<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>`;
-        logs.forEach(m => list.innerHTML += `<div class="meal-row-content">
- ${m.image ? `<img src="${m.image}" class="meal-img-thumb">` : ""}
- <div>
-   <div style="font-weight:700">${m.name}</div>
-   <div style="font-size:12px;color:#888">
-     ${m.ingredients ? m.ingredients.join(", ") : ""}
-   </div>
- </div>
-</div>`);
+        logs.forEach(m => list.innerHTML += `
+<div class="list-item">
+  <div class="meal-row-content">
+
+    ${m.image ? `<img src="${m.image}" class="meal-img-thumb">` : ""}
+
+    <div style="flex:1">
+
+      <div style="font-weight:700">
+        ${m.name}
+      </div>
+
+      <div style="font-size:12px;color:#777;margin-top:4px">
+        ${m.ingredients ? "• " + m.ingredients.join("<br>• ") : ""}
+      </div>
+
+    </div>
+
+  </div>
+
+  <div style="font-size:12px;color:#888">
+    ${m.calories} kcal
+  </div>
+</div>
+`);
     }
 
     function renderWeightLogs() { 
@@ -1508,5 +1524,3 @@ document.getElementById("avatarGallery").onchange = e=>{
   </script>
 </body>
 </html>
-
-kat mana do
