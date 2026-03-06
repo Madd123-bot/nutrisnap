@@ -1143,8 +1143,8 @@ if(savedWeights){
         ${m.name}
       </div>
 
-      <div style="font-size:11px;color:#888;margin-top:4px;padding-left:12px">
-  ${m.ingredients ? m.ingredients.map(i => `• ${i}`).join("<br>") : ""}
+      <div style="font-size:12px;color:#777;margin-top:3px;">
+${i.ingredients ? m.ingredients.map(x => `• ${x}`).join("<br>") : ""}
 </div>
 
     </div>
@@ -1429,9 +1429,7 @@ function closePopup(){
 function getDailyCalorieTarget(){
 
     const userGoal = localStorage.getItem("userGoal");
-    const currentWeight = document.getElementById("signupWeight")?.value 
-        || localStorage.getItem("currentWeight") 
-        || 70;
+    const currentWeight = localStorage.getItem("currentWeight") || 70;
 
     let maintenance = currentWeight * 30;
 
