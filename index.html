@@ -920,43 +920,6 @@ if(preview) preview.src = savedAvatar;
     }));
 }
 
-async function analyzeFoodWithAI(base64Image){
-
-    try{
-
-        const res = await fetch(
-            "https://nutrisnap-ai-proxy-production.up.railway.app/ai",
-            {
-                method:"POST",
-                headers:{
-                    "Content-Type":"application/json"
-                },
-                body: JSON.stringify({
-                    image: base64Image
-                })
-            }
-        );
-
-        const data = await res.json();
-
-        if(!data || !data.length){
-            return null;
-        }
-
-        const firstFood = data[0].name?.toLowerCase() || "";
-
-        // nasi lemak special breakdown
-        if(firstFood.includes("nasi lemak")){
-            return simulateNasiLemakBreakdown(base64Image);
-        }
-
-        return data;
-
-    }catch(e){
-        console.log("AI FETCH ERROR:",e);
-        return null;
-    }
-}
 
 
     // --- 1. UI HELPERS ---
@@ -1044,7 +1007,7 @@ async function analyzeFoodWithAI(base64Image){
 
         document.getElementById('aiLoading').classList.remove('hidden');
 
-        const results = await analyzeFoodWithAI(imageBase64);
+        const results = simulateNasiLemakBreakdown(imageBase64);
 
         document.getElementById('aiLoading').classList.add('hidden');
 
