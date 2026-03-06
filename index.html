@@ -1015,27 +1015,31 @@ window.handleImageUpload = (input) => {
 
    const mealType = detectMealTime();
 
-   for(const r of results){
+const ingredients = results.map(i => i.name);
 
-      const data = {
-        name: r.name,
-        calories: r.calories,
-        protein: r.protein,
-        carbs: r.carbs,
-        date: getTodayDate(),
-        image: imageBase64,
-        mealType
-      };
+const totalCalories = results.reduce((a,b)=>a+b.calories,0);
+const totalProtein = results.reduce((a,b)=>a+b.protein,0);
+const totalCarbs = results.reduce((a,b)=>a+b.carbs,0);
 
-      if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-         await window.fs.addDoc(
-            window.getCollection(currentUser.uid,'meals'),
-            data
-         );
-      }else{
-         mealLogs.push(data);
-      }
-   }
+const data = {
+ name: "Nasi Lemak",
+ ingredients,
+ calories: totalCalories,
+ protein: totalProtein,
+ carbs: totalCarbs,
+ date: getTodayDate(),
+ image: imageBase64,
+ mealType
+};
+
+if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+ await window.fs.addDoc(
+   window.getCollection(currentUser.uid,'meals'),
+   data
+ );
+}else{
+ mealLogs.push(data);
+}
 
    // popup result
    let breakdown = "AI detect:\n\n";
@@ -1114,7 +1118,15 @@ window.handleImageUpload = (input) => {
         
         const list = document.getElementById('recentMealsList');
         list.innerHTML = logs.length ? '' : `<div style="text-align:center;color:#999;padding:10px">Tiada rekod hari ini</div>`;
-        logs.forEach(m => list.innerHTML += `<div class="list-item"><div class="item-val">${m.name}</div><div class="item-date">${m.calories} kcal</div></div>`);
+        logs.forEach(m => list.innerHTML += `<div class="meal-row-content">
+ ${m.image ? `<img src="${m.image}" class="meal-img-thumb">` : ""}
+ <div>
+   <div style="font-weight:700">${m.name}</div>
+   <div style="font-size:12px;color:#888">
+     ${m.ingredients ? m.ingredients.join(", ") : ""}
+   </div>
+ </div>
+</div>`);
     }
 
     function renderWeightLogs() { 
@@ -1188,6 +1200,9 @@ window.handleImageUpload = (input) => {
                     ${imgHtml}
                     <div class="meal-info">
                         <div style="font-weight:700">${i.name}</div>
+<div style="font-size:12px;color:#777;margin-top:3px;">
+ ${i.ingredients ? "• " + i.ingredients.join("<br>• ") : ""}
+</div>
                         <div style="font-size:12px;color:#888;">
                             ${i.mealType || ""} ${i.portion ? "• "+i.portion : ""} • ${i.calories} kcal • ${i.protein}g P • ${i.carbs}g C
                         </div>
