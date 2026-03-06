@@ -1003,6 +1003,10 @@ window.handleImageUpload = (input) => {
 
    const imageBase64 = canvas.toDataURL("image/jpeg",0.7);
 
+   const preview = document.getElementById("uploadPreview");
+preview.src = imageBase64;
+preview.classList.remove("hidden");
+
    // show loading
    document.getElementById('aiLoading').classList.remove('hidden');
 
@@ -1086,6 +1090,15 @@ if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
             const u = JSON.parse(localStorage.getItem('currentUser') || '{}');
             window.handleLoginSuccess(u);
         }
+        const savedMeals = localStorage.getItem("mealLogs");
+if(savedMeals){
+    mealLogs = JSON.parse(savedMeals);
+}
+
+const savedWeights = localStorage.getItem("weightLogs");
+if(savedWeights){
+    weightLogs = JSON.parse(savedWeights);
+}
     });
     function animateNumber(el,start,end,duration=500){
 
