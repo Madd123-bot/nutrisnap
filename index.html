@@ -1143,9 +1143,9 @@ if(savedWeights){
         ${m.name}
       </div>
 
-      <div style="font-size:12px;color:#777;margin-top:4px">
-        ${m.ingredients ? "• " + m.ingredients.join("<br>• ") : ""}
-      </div>
+      <div style="font-size:11px;color:#888;margin-top:4px;padding-left:12px">
+  ${m.ingredients ? m.ingredients.map(i => `• ${i}`).join("<br>") : ""}
+</div>
 
     </div>
 
