@@ -966,97 +966,94 @@ if(preview) preview.src = savedAvatar;
     const API_KEY = ""; 
 
     // --- 3. LOGIN SUCCESS HANDLER ---
-    window.handleImageUpload = (input) => { 
-    if (!input.files || !input.files[0]) return;
+window.handleImageUpload = (input) => {
 
-    const file = input.files[0];
-    const img = new Image();
-    const reader = new FileReader();
+ if (!input.files || !input.files[0]) return;
 
-    reader.onload = function(e){
-        img.src = e.target.result;
-    };
+ const file = input.files[0];
+ const img = new Image();
+ const reader = new FileReader();
 
-    img.onload = async function(){
+ reader.onload = e => img.src = e.target.result;
 
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+ img.onload = async function(){
 
-        // 🔥 resize max width 512px (cukup untuk AI)
-        const MAX = 512;
-        let w = img.width;
-        let h = img.height;
+   const canvas = document.createElement("canvas");
+   const ctx = canvas.getContext("2d");
 
-        if(w > h){
-            if(w > MAX){
-                h *= MAX / w;
-                w = MAX;
-            }
-        }else{
-            if(h > MAX){
-                w *= MAX / h;
-                h = MAX;
-            }
-        }
+   const MAX = 512;
+   let w = img.width;
+   let h = img.height;
 
-        canvas.width = w;
-        canvas.height = h;
-        ctx.drawImage(img,0,0,w,h);
+   if(w > h){
+      if(w > MAX){
+         h *= MAX / w;
+         w = MAX;
+      }
+   }else{
+      if(h > MAX){
+         w *= MAX / h;
+         h = MAX;
+      }
+   }
 
-        const imageBase64 = canvas.toDataURL("image/jpeg",0.7);
+   canvas.width = w;
+   canvas.height = h;
+   ctx.drawImage(img,0,0,w,h);
 
-        document.getElementById('aiLoading').classList.remove('hidden');
+   const imageBase64 = canvas.toDataURL("image/jpeg",0.7);
 
-        const results = simulateNasiLemakBreakdown(imageBase64);
+   // show loading
+   document.getElementById('aiLoading').classList.remove('hidden');
 
-        document.getElementById('aiLoading').classList.add('hidden');
+   // 🔥 fake AI delay
+   await new Promise(r => setTimeout(r,1500));
 
-        if(!results){
-            showPopup("AI gagal detect makanan.");
-            return;
-        }
+   const results = simulateNasiLemakBreakdown(imageBase64);
 
-        const mealType = detectMealTime();
+   document.getElementById('aiLoading').classList.add('hidden');
 
-        for(const r of results){
+   const mealType = detectMealTime();
 
-    const data = {
-        name: r.name || "Makanan",
-        calories: r.calories || 0,
-        protein: r.protein || 0,
-        carbs: r.carbs || 0,
+   for(const r of results){
+
+      const data = {
+        name: r.name,
+        calories: r.calories,
+        protein: r.protein,
+        carbs: r.carbs,
         date: getTodayDate(),
         image: imageBase64,
         mealType
-    };
+      };
 
-    if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
-        await window.fs.addDoc(window.getCollection(currentUser.uid,'meals'), data);
-    }else{
-        mealLogs.push(data);
-    }
-}
-let breakdown = "AI detect:\n\n";
+      if(window.isFirebaseReady && !currentUser.uid.startsWith('offline_')){
+         await window.fs.addDoc(
+            window.getCollection(currentUser.uid,'meals'),
+            data
+         );
+      }else{
+         mealLogs.push(data);
+      }
+   }
 
-results.forEach(i=>{
-    breakdown +=
-    "• " + (i.name || "Makanan") +
-    " — " + (i.calories||0) + " kcal, " +
-    (i.protein||0) + "g protein, " +
-    (i.carbs||0) + "g carbs\n";
-});
+   // popup result
+   let breakdown = "AI detect:\n\n";
 
-showPopup(breakdown);
+   results.forEach(i=>{
+      breakdown +=
+      "• " + i.name +
+      " — " + i.calories + " kcal\n";
+   });
 
+   showPopup(breakdown);
 
+   localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
 
+   showScreen('home');
+ };
 
-        localStorage.setItem('mealLogs', JSON.stringify(mealLogs));
-
-        showScreen('home');
-    };
-
-    reader.readAsDataURL(file);
+ reader.readAsDataURL(file);
 };
 
 
