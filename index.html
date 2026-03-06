@@ -843,7 +843,7 @@ if(savedAvatar){
         el.innerHTML = `<img src="${savedAvatar}">`;
     });
     const preview = document.getElementById("editAvatarPreview");
-if(preview) preview.src = avatarBase64;
+if(preview) preview.src = savedAvatar;
 
 }
 
@@ -920,23 +920,6 @@ if(preview) preview.src = avatarBase64;
     }));
 }
 
-function simulateNasiLemakBreakdown(imageBase64){
-
-    const items = [
-        { name:"Nasi Putih", calories:260, carbs:57, protein:5 },
-        { name:"Telur Rebus (2 biji)", calories:156, carbs:2, protein:12 },
-        { name:"Sambal", calories:120, carbs:12, protein:2 },
-        { name:"Kacang Tanah", calories:150, carbs:6, protein:7 },
-        { name:"Ikan Bilis", calories:70, carbs:1, protein:6 },
-        { name:"Timun", calories:15, carbs:3, protein:1 }
-    ];
-
-    return items.map(i => ({
-        ...i,
-        image: imageBase64
-    }));
-}
-
 async function analyzeFoodWithAI(base64Image){
 
     try{
@@ -962,7 +945,7 @@ async function analyzeFoodWithAI(base64Image){
 
         const firstFood = data[0].name?.toLowerCase() || "";
 
-        // 🔥 kalau AI detect nasi lemak → auto breakdown
+        // nasi lemak special breakdown
         if(firstFood.includes("nasi lemak")){
             return simulateNasiLemakBreakdown(base64Image);
         }
@@ -1090,11 +1073,14 @@ async function analyzeFoodWithAI(base64Image){
         mealLogs.push(data);
     }
 }
-// 🔥 bina text breakdown makanan
 let breakdown = "AI detect:\n\n";
 
 results.forEach(i=>{
-    breakdown += "• " + (i.name || "Makanan") + "\n";
+    breakdown +=
+    "• " + (i.name || "Makanan") +
+    " — " + (i.calories||0) + " kcal, " +
+    (i.protein||0) + "g protein, " +
+    (i.carbs||0) + "g carbs\n";
 });
 
 showPopup(breakdown);
