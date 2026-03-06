@@ -920,6 +920,23 @@ if(preview) preview.src = avatarBase64;
     }));
 }
 
+function simulateNasiLemakBreakdown(imageBase64){
+
+    const items = [
+        { name:"Nasi Putih", calories:260, carbs:57, protein:5 },
+        { name:"Telur Rebus (2 biji)", calories:156, carbs:2, protein:12 },
+        { name:"Sambal", calories:120, carbs:12, protein:2 },
+        { name:"Kacang Tanah", calories:150, carbs:6, protein:7 },
+        { name:"Ikan Bilis", calories:70, carbs:1, protein:6 },
+        { name:"Timun", calories:15, carbs:3, protein:1 }
+    ];
+
+    return items.map(i => ({
+        ...i,
+        image: imageBase64
+    }));
+}
+
 async function analyzeFoodWithAI(base64Image){
 
     try{
